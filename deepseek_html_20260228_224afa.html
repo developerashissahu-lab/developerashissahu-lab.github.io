@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinite Universe Explorer</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles for canvas and effects */
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        #universeCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(ellipse at center, #0a0a2a 0%, #000000 100%);
+        }
+        
+        .glass-panel {
+            background: rgba(10, 10, 20, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .ui-element {
+            z-index: 10;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 10px rgba(100, 150, 255, 0.8);
+        }
+        
+        .star-glow {
+            animation: pulse 3s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .glass-panel {
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <!-- Canvas for rendering the universe -->
+    <canvas id="universeCanvas"></canvas>
+    
+    <!-- UI Overlay - Top Bar -->
+    <div class="fixed top-0 left-0 right-0 p-4 flex justify-between items-start z-20 ui-element">
+        <!-- Logo and Title -->
+        <div class="glass-panel px-4 py-2 flex items-center space-x-2">
+            <i class="fas fa-infinity text-blue-400 text-xl"></i>
+            <span class="font-bold text-lg tracking-wider glow-text">INFINITE UNIVERSE</span>
+            <span class="text-xs text-blue-300 ml-2 hidden sm:inline">EXPLORER</span>
+        </div>
+        
+        <!-- Right Side Controls -->
+        <div class="flex space-x-2">
+            <!-- Zoom Level Display -->
+            <div class="glass-panel px-4 py-2 flex items-center space-x-2">
+                <i class="fas fa-search-plus text-blue-400 text-sm"></i>
+                <span id="zoomLevel" class="font-mono text-sm">10¹² m</span>
+                <span class="text-xs text-gray-400 hidden sm:inline">| Galaxy</span>
+            </div>
+            
+            <!-- FPS Counter -->
+            <div class="glass-panel px-3 py-2 flex items-center space-x-1">
+                <i class="fas fa-chart-line text-green-400 text-xs"></i>
+                <span id="fpsCounter" class="font-mono text-sm">60</span>
+                <span class="text-xs text-gray-400">FPS</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Center HUD - Coordinates (appears on hover/tap) -->
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-15 pointer-events-none opacity-0 hover:opacity-100 transition-opacity duration-300" id="centerHUD">
+        <div class="glass-panel px-4 py-2 text-center">
+            <div class="text-xs text-blue-400">VIEWPORT CENTER</div>
+            <div id="coordinates" class="font-mono text-xs">(0.00, 0.00, 0.00)</div>
+        </div>
+    </div>
+    
+    <!-- Bottom Controls -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 flex justify-between items-end z-20 ui-element">
+        <!-- Left Side - Info Panel -->
+        <div class="glass-panel p-3 max-w-xs hidden md:block">
+            <div class="text-xs text-blue-400 mb-1">DISCOVERY</div>
+            <div id="discoveryMessage" class="text-sm">Exploring the infinite cosmos...</div>
+            <div class="flex mt-2 space-x-1">
+                <span class="bg-blue-900 bg-opacity-50 text-xs px-2 py-1 rounded">✨ New stars forming</span>
+                <span class="bg-purple-900 bg-opacity-50 text-xs px-2 py-1 rounded">🌀 Nebula nearby</span>
+            </div>
+        </div>
+        
+        <!-- Center - Navigation Controls -->
+        <div class="flex flex-col items-center space-y-2">
+            <!-- Zoom Slider (hidden on mobile) -->
+            <div class="glass-panel p-2 hidden sm:block">
+                <input type="range" id="zoomSlider" min="0" max="100" value="50" class="w-48 accent-blue-500">
+            </div>
+            
+            <!-- Main Control Buttons -->
+            <div class="glass-panel flex space-x-2 p-1">
+                <button id="resetView" class="p-3 hover:bg-blue-900 hover:bg-opacity-30 rounded-lg transition">
+                    <i class="fas fa-home text-blue-400"></i>
+                </button>
+                <button id="fullscreenToggle" class="p-3 hover:bg-blue-900 hover:bg-opacity-30 rounded-lg transition">
+                    <i class="fas fa-expand text-blue-400"></i>
+                </button>
+                <button id="toggleInfo" class="p-3 hover:bg-blue-900 hover:bg-opacity-30 rounded-lg transition">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                </button>
+                <button id="settingsBtn" class="p-3 hover:bg-blue-900 hover:bg-opacity-30 rounded-lg transition">
+                    <i class="fas fa-cog text-blue-400"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Right Side - Performance Stats -->
+        <div class="glass-panel p-3 text-right hidden md:block">
+            <div class="text-xs text-green-400 mb-1">PERFORMANCE</div>
+            <div class="text-sm"><span id="starCount">12.4k</span> stars</div>
+            <div class="text-xs text-gray-400"><span id="memoryEstimate">45</span> MB</div>
+        </div>
+    </div>
+    
+    <!-- Mobile-only bottom indicator -->
+    <div class="fixed bottom-20 left-0 right-0 flex justify-center md:hidden z-15 pointer-events-none">
+        <div class="glass-panel px-4 py-2 text-xs">
+            <i class="fas fa-hand-pointer text-blue-400 mr-1"></i> Pinch to zoom • Drag to pan
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+            
+            // =========================================
+            // CONFIGURATION & CONSTANTS
+            // =========================================
+            const CONFIG = {
+                // Visual settings
+                STAR_BASE_COUNT: 5000,
+                MAX_STARS: 20000,
+                MIN_STARS: 1000,
+                PARALLAX_LAYERS: 5,
+                NEBULA_LAYERS: 3,
+                
+                // Zoom settings
+                MIN_ZOOM: 0.1,
+                MAX_ZOOM: 1000000,
+                ZOOM_SPEED: 0.001,
+                ZOOM_FACTOR: 1.001,
+                
+                // Performance
+                TARGET_FPS: 60,
+                FPS_UPDATE_INTERVAL: 500, // ms
+                ADAPTIVE_RENDER: true,
+                
+                // Colors
+                COLORS: {
+                    BACKGROUND: '#0a0a2a',
+                    STAR_COLORS: [
+                        '#ffffff', // white
+                        '#ffe9c4', // warm white
+                        '#ffddbb', // yellowish
+                        '#c4d7ff', // blueish
+                        '#ffc4c4', // reddish
+                        '#d4c4ff'  // purple
+                    ],
+                    NEBULA_COLORS: [
+                        'rgba(100, 80, 255, 0.1)',
+                        'rgba(200, 100, 255, 0.1)',
+                        'rgba(80, 150, 255, 0.1)',
+                        'rgba(255, 100, 150, 0.1)'
+                    ]
+                }
+            };
+            
+            // =========================================
+            // STATE MANAGEMENT
+            // =========================================
+            const State = {
+                // Camera/View
+                camera: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1.0,
+                    targetZoom: 1.0,
+                    minZoom: 0.1,
+                    maxZoom: 1000000
+                },
+                
+                // Interaction
+                isDragging: false,
+                lastMouseX: 0,
+                lastMouseY: 0,
+                dragStartX: 0,
+                dragStartY: 0,
+                
+                // Performance
+                fps: 60,
+                frameCount: 0,
+                lastFpsUpdate: performance.now(),
+                starsRendered: 0,
+                
+                // Generation seeds
+                seed: Math.random() * 10000,
+                
+                // Viewport
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    aspect: window.innerWidth / window.innerHeight
+                },
+                
+                // Universe parameters
+                universe: {
+                    scale: 1.0,
+                    offsetX: 0,
+                    offsetY: 0
+                }
+            };
+            
+            // =========================================
+            // CANVAS SETUP
+            // =========================================
+            const canvas = document.getElementById('universeCanvas');
+            const ctx = canvas.getContext('2d', { 
+                alpha: false,
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                State.viewport.width = canvas.width;
+                State.viewport.height = canvas.height;
+                State.viewport.aspect = canvas.width / canvas.height;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // =========================================
+            // UI ELEMENTS
+            // =========================================
+            const ui = {
+                zoomLevel: document.getElementById('zoomLevel'),
+                fpsCounter: document.getElementById('fpsCounter'),
+                coordinates: document.getElementById('coordinates'),
+                discoveryMessage: document.getElementById('discoveryMessage'),
+                starCount: document.getElementById('starCount'),
+                memoryEstimate: document.getElementById('memoryEstimate'),
+                zoomSlider: document.getElementById('zoomSlider'),
+                resetView: document.getElementById('resetView'),
+                fullscreenToggle: document.getElementById('fullscreenToggle'),
+                toggleInfo: document.getElementById('toggleInfo'),
+                settingsBtn: document.getElementById('settingsBtn'),
+                centerHUD: document.getElementById('centerHUD')
+            };
+            
+            // =========================================
+            // STAR GENERATION (PROCEDURAL)
+            // =========================================
+            class StarField {
+                constructor() {
+                    this.stars = [];
+                    this.layers = [];
+                    this.seed = State.seed;
+                    this.generateLayers();
+                }
+                
+                generateLayers() {
+                    // Generate stars for each parallax layer
+                    for (let layer = 0; layer < CONFIG.PARALLAX_LAYERS; layer++) {
+                        const layerStars = [];
+                        const layerDepth = 0.2 + (layer * 0.4); // Parallax factor
+                        const starCount = Math.floor(CONFIG.STAR_BASE_COUNT * (1 - layer * 0.15));
+                        
+                        for (let i = 0; i < starCount; i++) {
+                            layerStars.push(this.generateStar(layerDepth, i, layer));
+                        }
+                        
+                        this.layers[layer] = {
+                            depth: layerDepth,
+                            stars: layerStars
+                        };
+                    }
+                }
+                
+                generateStar(depth, index, layer) {
+                    // Use pseudorandom generation based on seed and position
+                    const seedRand = (this.seed + index * 1000 + layer * 10000) % 1000 / 1000;
+                    const seedRand2 = (this.seed + index * 2000 + layer * 20000) % 1000 / 1000;
+                    
+                    // Position in universe coordinates (large range)
+                    const x = (seedRand * 20000 - 10000) * (1 + layer * 0.5);
+                    const y = (seedRand2 * 20000 - 10000) * (1 + layer * 0.5);
+                    
+                    // Star properties
+                    const size = 0.5 + seedRand * 3 * (1 + layer * 0.3);
+                    const brightness = 0.3 + seedRand2 * 0.7;
+                    
+                    // Color based on "stellar classification"
+                    const colorIndex = Math.floor(seedRand * CONFIG.COLORS.STAR_COLORS.length);
+                    const color = CONFIG.COLORS.STAR_COLORS[colorIndex];
+                    
+                    return {
+                        x, y,
+                        size,
+                        brightness,
+                        color,
+                        twinkle: Math.random() * Math.PI * 2,
+                        twinkleSpeed: 0.5 + Math.random() * 2
+                    };
+                }
+                
+                getVisibleStars(cameraX, cameraY, zoom, viewportWidth, viewportHeight) {
+                    const visibleStars = [];
+                    const viewportSize = Math.max(viewportWidth, viewportHeight) / zoom;
+                    
+                    // Adjust star count based on zoom and performance
+                    let targetCount = CONFIG.STAR_BASE_COUNT;
+                    if (CONFIG.ADAPTIVE_RENDER) {
+                        if (zoom > 100) {
+                            targetCount = Math.floor(CONFIG.MAX_STARS * (1 - Math.min(1, Math.log10(zoom) / 5)));
+                        } else if (zoom < 0.1) {
+                            targetCount = CONFIG.MIN_STARS;
+                        }
+                    }
+                    
+                    // Calculate visible area
+                    const visibleXMin = -cameraX / zoom - viewportSize / 2;
+                    const visibleXMax = -cameraX / zoom + viewportSize / 2;
+                    const visibleYMin = -cameraY / zoom - viewportSize / 2;
+                    const visibleYMax = -cameraY / zoom + viewportSize / 2;
+                    
+                    // Collect visible stars from all layers
+                    for (const layer of this.layers) {
+                        for (const star of layer.stars) {
+                            // Apply parallax
+                            const starX = star.x * layer.depth;
+                            const starY = star.y * layer.depth;
+                            
+                            if (starX >= visibleXMin && starX <= visibleXMax &&
+                                starY >= visibleYMin && starY <= visibleYMax) {
+                                
+                                visibleStars.push({
+                                    ...star,
+                                    layerX: starX,
+                                    layerY: starY,
+                                    parallax: layer.depth,
+                                    screenX: 0,
+                                    screenY: 0
+                                });
+                                
+                                if (visibleStars.length >= targetCount) break;
+                            }
+                        }
+                    }
+                    
+                    State.starsRendered = visibleStars.length;
+                    return visibleStars;
+                }
+            }
+            
+            // Initialize star field
+            const starField = new StarField();
+            
+            // =========================================
+            // NEBULA GENERATION
+            // =========================================
+            class NebulaField {
+                constructor() {
+                    this.nebulae = [];
+                    this.generateNebulae();
+                }
+                
+                generateNebulae() {
+                    for (let i = 0; i < 20; i++) {
+                        const seedRand = (State.seed + i * 500) % 1000 / 1000;
+                        const seedRand2 = (State.seed + i * 600) % 1000 / 1000;
+                        
+                        this.nebulae.push({
+                            x: (seedRand * 40000 - 20000),
+                            y: (seedRand2 * 40000 - 20000),
+                            radius: 1000 + Math.random() * 5000,
+                            color: CONFIG.COLORS.NEBULA_COLORS[
+                                Math.floor(Math.random() * CONFIG.COLORS.NEBULA_COLORS.length)
+                            ],
+                            intensity: 0.3 + Math.random() * 0.5
+                        });
+                    }
+                }
+                
+                draw(ctx, cameraX, cameraY, zoom, width, height) {
+                    const visibleNebulae = this.nebulae.filter(n => {
+                        const dx = (n.x + cameraX) * zoom;
+                        const dy = (n.y + cameraY) * zoom;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        return distance < width * 2;
+                    });
+                    
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'lighter';
+                    
+                    for (const neb of visibleNebulae) {
+                        const screenX = width / 2 + (neb.x + cameraX) * zoom;
+                        const screenY = height / 2 + (neb.y + cameraY) * zoom;
+                        const screenRadius = neb.radius * zoom * 0.5;
+                        
+                        if (screenRadius < 10) continue;
+                        
+                        const gradient = ctx.createRadialGradient(
+                            screenX, screenY, 0,
+                            screenX, screenY, screenRadius
+                        );
+                        
+                        gradient.addColorStop(0, neb.color);
+                        gradient.addColorStop(1, 'transparent');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.globalAlpha = neb.intensity * Math.min(1, zoom / 10);
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, screenRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+            
+            const nebulaField = new NebulaField();
+            
+            // =========================================
+            // RENDERING ENGINE
+            // =========================================
+            function render() {
+                // Clear canvas with cosmic background
+                ctx.fillStyle = CONFIG.COLORS.BACKGROUND;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Apply camera transformations
+                const cameraX = -State.camera.x;
+                const cameraY = -State.camera.y;
+                const zoom = State.camera.zoom;
+                
+                // Draw nebulae first (background)
+                nebulaField.draw(ctx, cameraX, cameraY, zoom, canvas.width, canvas.height);
+                
+                // Get visible stars
+                const visibleStars = starField.getVisibleStars(
+                    cameraX, cameraY, zoom, 
+                    canvas.width, canvas.height
+                );
+                
+                // Draw stars
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                
+                for (const star of visibleStars) {
+                    // Calculate screen position with parallax
+                    const screenX = canvas.width / 2 + (star.layerX + cameraX) * zoom;
+                    const screenY = canvas.height / 2 + (star.layerY + cameraY) * zoom;
+                    
+                    // Skip if outside visible area (with margin)
+                    if (screenX < -50 || screenX > canvas.width + 50 || 
+                        screenY < -50 || screenY > canvas.height + 50) {
+                        continue;
+                    }
+                    
+                    // Calculate apparent size based on zoom and distance
+                    let apparentSize = star.size * zoom * 0.5;
+                    if (apparentSize < 0.5) apparentSize = 0.5;
+                    if (apparentSize > 10) apparentSize = 10;
+                    
+                    // Twinkling effect
+                    const twinkle = Math.sin(performance.now() * 0.002 * star.twinkleSpeed + star.twinkle) * 0.2 + 0.8;
+                    const alpha = star.brightness * twinkle * Math.min(1, zoom / 2);
+                    
+                    // Draw star glow
+                    ctx.shadowColor = star.color;
+                    ctx.shadowBlur = apparentSize * 2;
+                    
+                    // Draw star
+                    ctx.fillStyle = star.color;
+                    ctx.globalAlpha = alpha;
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, apparentSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add extra glow for larger stars
+                    if (apparentSize > 3) {
+                        ctx.shadowBlur = apparentSize * 4;
+                        ctx.globalAlpha = alpha * 0.3;
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, apparentSize * 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                
+                ctx.restore();
+                
+                // Draw additional cosmic effects at certain zoom levels
+                drawCosmicEffects(ctx, zoom, canvas.width, canvas.height);
+                
+                // Update UI with zoom level description
+                updateZoomDescription(zoom);
+                
+                // Update star count display
+                if (ui.starCount) {
+                    ui.starCount.textContent = (State.starsRendered / 1000).toFixed(1) + 'k';
+                }
+            }
+            
+            function drawCosmicEffects(ctx, zoom, width, height) {
+                // Galaxy core effect at medium zoom
+                if (zoom > 0.5 && zoom < 50) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'overlay';
+                    
+                    // Draw galactic plane
+                    const gradient = ctx.createLinearGradient(0, height * 0.3, 0, height * 0.7);
+                    gradient.addColorStop(0, 'rgba(100, 150, 255, 0.02)');
+                    gradient.addColorStop(0.5, 'rgba(200, 200, 255, 0.05)');
+                    gradient.addColorStop(1, 'rgba(100, 150, 255, 0.02)');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    ctx.restore();
+                }
+                
+                // Cosmic background noise at all levels
+                if (zoom < 1000) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.02;
+                    ctx.fillStyle = '#ffffff';
+                    
+                    for (let i = 0; i < 100; i++) {
+                        if (Math.random() > 0.99) {
+                            ctx.fillRect(
+                                Math.random() * width,
+                                Math.random() * height,
+                                1, 1
+                            );
+                        }
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+            
+            // =========================================
+            // ZOOM HANDLING
+            // =========================================
+            function updateZoom( deltaZoom, mouseX, mouseY ) {
+                const oldZoom = State.camera.zoom;
+                
+                // Apply zoom with limits
+                State.camera.zoom *= (1 + deltaZoom * CONFIG.ZOOM_SPEED);
+                State.camera.zoom = Math.max(State.camera.minZoom, 
+                                    Math.min(State.camera.maxZoom, State.camera.zoom));
+                
+                // Adjust camera position to zoom toward mouse cursor
+                if (mouseX !== undefined && mouseY !== undefined) {
+                    const zoomFactor = State.camera.zoom / oldZoom;
+                    
+                    // Convert mouse position to universe coordinates
+                    const worldX = (mouseX - canvas.width/2) / oldZoom - State.camera.x;
+                    const worldY = (mouseY - canvas.height/2) / oldZoom - State.camera.y;
+                    
+                    // New camera position to keep world point under mouse
+                    State.camera.x = -worldX + (mouseX - canvas.width/2) / State.camera.zoom;
+                    State.camera.y = -worldY + (mouseY - canvas.height/2) / State.camera.zoom;
+                }
+                
+                // Update slider
+                if (ui.zoomSlider) {
+                    const sliderValue = (Math.log10(State.camera.zoom) + 1) * 33.33;
+                    ui.zoomSlider.value = Math.min(100, Math.max(0, sliderValue));
+                }
+            }
+            
+            function updateZoomDescription(zoom) {
+                if (!ui.zoomLevel) return;
+                
+                let description = '';
+                let scale = '';
+                
+                if (zoom < 0.001) {
+                    scale = '10⁻⁹ m';
+                    description = 'Quantum Foam';
+                } else if (zoom < 0.01) {
+                    scale = '10⁻⁶ m';
+                    description = 'Atomic Scale';
+                } else if (zoom < 0.1) {
+                    scale = '10⁻³ m';
+                    description = 'Microscopic';
+                } else if (zoom < 1) {
+                    scale = '10⁰ m';
+                    description = 'Human Scale';
+                } else if (zoom < 10) {
+                    scale = '10³ m';
+                    description = 'City Scale';
+                } else if (zoom < 100) {
+                    scale = '10⁶ m';
+                    description = 'Planetary';
+                } else if (zoom < 1000) {
+                    scale = '10⁹ m';
+                    description = 'Solar System';
+                } else if (zoom < 100000) {
+                    scale = '10¹² m';
+                    description = 'Interstellar';
+                } else if (zoom < 10000000) {
+                    scale = '10¹⁵ m';
+                    description = 'Galactic';
+                } else {
+                    scale = '10¹⁸+ m';
+                    description = 'Cosmic Web';
+                }
+                
+                ui.zoomLevel.innerHTML = `${scale} <span class="text-blue-400">| ${description}</span>`;
+                
+                // Update discovery message
+                if (ui.discoveryMessage) {
+                    const discoveries = [
+                        '✨ Traversing the cosmic void...',
+                        '🌀 Approaching a nebula cluster',
+                        '⭐ New stars forming in your path',
+                        '🌌 Galactic core ahead',
+                        '⚫ Possible black hole detected',
+                        '🌈 Quantum fluctuations visible',
+                        '🚀 Traveling at warp speed'
+                    ];
+                    
+                    if (Math.random() > 0.99) {
+                        ui.discoveryMessage.textContent = discoveries[Math.floor(Math.random() * discoveries.length)];
+                    }
+                }
+            }
+            
+            // =========================================
+            // INTERACTION HANDLERS
+            // =========================================
+            
+            // Mouse wheel zoom
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                const delta = -Math.sign(e.deltaY) * 0.1;
+                updateZoom(delta, e.clientX, e.clientY);
+            });
+            
+            // Mouse drag panning
+            canvas.addEventListener('mousedown', (e) => {
+                State.isDragging = true;
+                State.lastMouseX = e.clientX;
+                State.lastMouseY = e.clientY;
+                State.dragStartX = State.camera.x;
+                State.dragStartY = State.camera.y;
+                canvas.style.cursor = 'grabbing';
+            });
+            
+            window.addEventListener('mousemove', (e) => {
+                if (!State.isDragging) return;
+                
+                const dx = e.clientX - State.lastMouseX;
+                const dy = e.clientY - State.lastMouseY;
+                
+                State.camera.x += dx / State.camera.zoom;
+                State.camera.y += dy / State.camera.zoom;
+                
+                State.lastMouseX = e.clientX;
+                State.lastMouseY = e.clientY;
+                
+                // Update coordinates display
+                if (ui.coordinates) {
+                    ui.coordinates.textContent = `(${State.camera.x.toFixed(2)}, ${State.camera.y.toFixed(2)}, ${State.camera.zoom.toFixed(2)})`;
+                }
+            });
+            
+            window.addEventListener('mouseup', () => {
+                State.isDragging = false;
+                canvas.style.cursor = 'default';
+            });
+            
+            // Touch events for mobile
+            let initialDistance = null;
+            let initialZoom = null;
+            
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 2) {
+                    // Pinch zoom start
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialDistance = Math.sqrt(dx * dx + dy * dy);
+                    initialZoom = State.camera.zoom;
+                } else if (e.touches.length === 1) {
+                    // Pan start
+                    State.isDragging = true;
+                    State.lastMouseX = e.touches[0].clientX;
+                    State.lastMouseY = e.touches[0].clientY;
+                }
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                
+                if (e.touches.length === 2 && initialDistance) {
+                    // Pinch zoom
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    const zoomFactor = distance / initialDistance;
+                    State.camera.zoom = initialZoom * zoomFactor;
+                    State.camera.zoom = Math.max(State.camera.minZoom, 
+                                        Math.min(State.camera.maxZoom, State.camera.zoom));
+                    
+                    // Zoom toward center of pinch
+                    const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    
+                    updateZoom(zoomFactor - 1, centerX, centerY);
+                    
+                } else if (e.touches.length === 1 && State.isDragging) {
+                    // Pan
+                    const dx = e.touches[0].clientX - State.lastMouseX;
+                    const dy = e.touches[0].clientY - State.lastMouseY;
+                    
+                    State.camera.x += dx / State.camera.zoom;
+                    State.camera.y += dy / State.camera.zoom;
+                    
+                    State.lastMouseX = e.touches[0].clientX;
+                    State.lastMouseY = e.touches[0].clientY;
+                }
+            });
+            
+            canvas.addEventListener('touchend', (e) => {
+                initialDistance = null;
+                State.isDragging = false;
+            });
+            
+            // =========================================
+            // UI CONTROLS
+            // =========================================
+            
+            // Reset view
+            ui.resetView.addEventListener('click', () => {
+                State.camera.x = 0;
+                State.camera.y = 0;
+                State.camera.zoom = 1;
+                State.camera.targetZoom = 1;
+            });
+            
+            // Fullscreen toggle
+            ui.fullscreenToggle.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            });
+            
+            // Zoom slider
+            ui.zoomSlider.addEventListener('input', (e) => {
+                const sliderValue = parseFloat(e.target.value);
+                const zoom = Math.pow(10, (sliderValue / 33.33) - 1);
+                State.camera.zoom = Math.max(State.camera.minZoom, 
+                                    Math.min(State.camera.maxZoom, zoom));
+            });
+            
+            // Toggle info/HUD
+            ui.toggleInfo.addEventListener('click', () => {
+                ui.centerHUD.classList.toggle('opacity-0');
+            });
+            
+            // Settings button (placeholder)
+            ui.settingsBtn.addEventListener('click', () => {
+                alert('✨ Settings panel coming soon!\n\n• Adjust star density\n• Toggle nebulae\n• Performance mode\n• Color themes');
+            });
+            
+            // =========================================
+            // PERFORMANCE MONITORING
+            // =========================================
+            function updateFPS() {
+                State.frameCount++;
+                
+                const now = performance.now();
+                const elapsed = now - State.lastFpsUpdate;
+                
+                if (elapsed >= CONFIG.FPS_UPDATE_INTERVAL) {
+                    State.fps = Math.round((State.frameCount * 1000) / elapsed);
+                    State.frameCount = 0;
+                    State.lastFpsUpdate = now;
+                    
+                    if (ui.fpsCounter) {
+                        ui.fpsCounter.textContent = State.fps;
+                        
+                        // Color code FPS
+                        if (State.fps >= 55) {
+                            ui.fpsCounter.className = 'font-mono text-sm text-green-400';
+                        } else if (State.fps >= 30) {
+                            ui.fpsCounter.className = 'font-mono text-sm text-yellow-400';
+                        } else {
+                            ui.fpsCounter.className = 'font-mono text-sm text-red-400';
+                        }
+                    }
+                    
+                    // Estimate memory (rough approximation)
+                    if (ui.memoryEstimate) {
+                        const memory = Math.round(State.starsRendered * 0.01 + 30);
+                        ui.memoryEstimate.textContent = memory;
+                    }
+                    
+                    // Adjust star count based on FPS
+                    if (CONFIG.ADAPTIVE_RENDER && State.fps < 30) {
+                        CONFIG.STAR_BASE_COUNT = Math.max(CONFIG.MIN_STARS, 
+                            Math.floor(CONFIG.STAR_BASE_COUNT * 0.9));
+                    } else if (State.fps > 55 && CONFIG.STAR_BASE_COUNT < CONFIG.MAX_STARS) {
+                        CONFIG.STAR_BASE_COUNT = Math.min(CONFIG.MAX_STARS,
+                            Math.floor(CONFIG.STAR_BASE_COUNT * 1.05));
+                    }
+                }
+            }
+            
+            // =========================================
+            // ANIMATION LOOP
+            // =========================================
+            function animate() {
+                // Smooth zoom interpolation
+                if (Math.abs(State.camera.zoom - State.camera.targetZoom) > 0.001) {
+                    State.camera.zoom += (State.camera.targetZoom - State.camera.zoom) * 0.1;
+                }
+                
+                // Render frame
+                render();
+                
+                // Update FPS counter
+                updateFPS();
+                
+                // Request next frame
+                requestAnimationFrame(animate);
+            }
+            
+            // Start animation
+            animate();
+            
+            // =========================================
+            // INITIALIZATION
+            // =========================================
+            console.log('🚀 Infinite Universe Explorer initialized');
+            console.log(`🌌 Seed: ${State.seed}`);
+            console.log(`📺 Viewport: ${State.viewport.width}x${State.viewport.height}`);
+            
+            // Add escape hatch for debugging
+            window.debug = {
+                state: State,
+                starField: starField,
+                nebulaField: nebulaField,
+                config: CONFIG
+            };
+            
+        })();
+    </script>
+</body>
+</html>
