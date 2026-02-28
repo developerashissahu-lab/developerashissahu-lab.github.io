@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>love calculator · tailwind · animated</title>
+  <!-- Tailwind via CDN + a touch of custom keyframes for the floating pulse -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-12px) scale(1.02); }
+    }
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      14% { transform: scale(1.3); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.3); }
+      70% { transform: scale(1); }
+    }
+    .animate-heartbeat {
+      animation: heartbeat 1.8s ease-in-out infinite;
+    }
+    /* smooth glow for the result ring */
+    .glow-pink {
+      box-shadow: 0 0 25px rgba(255, 105, 180, 0.6), 0 0 45px rgba(255, 20, 147, 0.4);
+      transition: box-shadow 0.3s;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-rose-100 via-fuchsia-100 to-pink-200 flex items-center justify-center p-4 font-sans">
+
+  <!-- main card – soft glassmorphism with floating animation -->
+  <div class="max-w-md w-full bg-white/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10 animate-float">
+    
+    <!-- title with little heart -->
+    <div class="flex items-center justify-center gap-2 mb-2">
+      <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 drop-shadow-md">
+        love calculator
+      </h1>
+      <span class="text-5xl animate-heartbeat">❤️</span>
+    </div>
+    <p class="text-center text-pink-700 font-medium mb-8 text-lg">two names · one spark</p>
+
+    <!-- input section -->
+    <div class="space-y-5">
+      <div class="relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl filter drop-shadow">😊</span>
+        <input type="text" id="name1" placeholder="your name" 
+               class="w-full pl-14 pr-5 py-4 text-lg rounded-2xl border-2 border-white/60 bg-white/50 backdrop-blur-sm placeholder-pink-400/80 text-gray-800 font-medium focus:outline-none focus:ring-4 focus:ring-pink-300/50 focus:border-pink-300 transition-all shadow-inner">
+      </div>
+      <div class="relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl filter drop-shadow">🥰</span>
+        <input type="text" id="name2" placeholder="crush's name" 
+               class="w-full pl-14 pr-5 py-4 text-lg rounded-2xl border-2 border-white/60 bg-white/50 backdrop-blur-sm placeholder-pink-400/80 text-gray-800 font-medium focus:outline-none focus:ring-4 focus:ring-pink-300/50 focus:border-pink-300 transition-all shadow-inner">
+      </div>
+    </div>
+
+    <!-- calculate button with pulse effect -->
+    <button id="calculateBtn" 
+            class="mt-8 w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-2xl font-bold py-5 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 group border border-white/30">
+      <span>calculate</span>
+      <span class="text-3xl group-hover:rotate-12 transition-transform duration-300">✨</span>
+    </button>
+
+    <!-- result area with animated ring and heartbeat -->
+    <div id="resultContainer" class="mt-10 flex flex-col items-center justify-center opacity-0 translate-y-4 transition-all duration-700 ease-out">
+      <!-- progress ring (svg) + percentage inside -->
+      <div class="relative w-44 h-44 flex items-center justify-center">
+        <!-- background ring (light grey) -->
+        <svg class="absolute w-full h-full -rotate-90" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="70" fill="none" stroke="#fbc4d5" stroke-width="10" stroke-linecap="round" />
+        </svg>
+        <!-- foreground ring (dynamic gradient) -->
+        <svg class="absolute w-full h-full -rotate-90" viewBox="0 0 160 160">
+          <circle id="progressCircle" cx="80" cy="80" r="70" fill="none" stroke="url(#pinkGradient)" stroke-width="10" stroke-linecap="round" 
+                  stroke-dasharray="439.82" stroke-dashoffset="439.82" style="transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);"/>
+        </svg>
+        <!-- gradient definition -->
+        <svg class="absolute w-0 h-0">
+          <defs>
+            <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f472b6" />
+              <stop offset="100%" stop-color="#fb7185" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <!-- central heart + percentage (glowing) -->
+        <div id="heartDisplay" class="absolute w-28 h-28 rounded-full bg-white/40 backdrop-blur-md flex flex-col items-center justify-center shadow-inner border-4 border-white/70 glow-pink transition-all">
+          <span id="resultPercent" class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-pink-700 to-rose-600">0%</span>
+          <span class="text-3xl leading-8 filter drop-shadow-lg animate-heartbeat">❤️</span>
+        </div>
+      </div>
+      <!-- cute message under result -->
+      <div id="loveMessage" class="mt-4 text-2xl font-semibold text-pink-800 drop-shadow text-center"></div>
+    </div>
+
+    <!-- tiny signature -->
+    <p class="text-center text-pink-400 text-sm mt-6 select-none">✨ made with tailwind & love ✨</p>
+  </div>
+
+  <script>
+    (function() {
+      // DOM elements
+      const name1 = document.getElementById('name1');
+      const name2 = document.getElementById('name2');
+      const calcBtn = document.getElementById('calculateBtn');
+      const resultContainer = document.getElementById('resultContainer');
+      const resultPercent = document.getElementById('resultPercent');
+      const progressCircle = document.getElementById('progressCircle');
+      const loveMessage = document.getElementById('loveMessage');
+      const heartDisplay = document.getElementById('heartDisplay');
+
+      // circumference for r=70 → 2 * π * 70 ≈ 439.82
+      const circumference = 2 * Math.PI * 70; // 439.82
+
+      // romantic message mapping
+      const messages = [
+        { max: 20, text: "💔 hmm... cosmic dust?", emoji: "🌌" },
+        { max: 40, text: "💕 friendly spark", emoji: "🤝" },
+        { max: 60, text: "🌹 getting warmer!", emoji: "🔥" },
+        { max: 75, text: "💖 sweet connection", emoji: "🍬" },
+        { max: 90, text: "💞 almost soulmates", emoji: "✨" },
+        { max: 100, text: "❤️‍🔥 true love! wow!", emoji: "💘" }
+      ];
+
+      // fancy calculation based on names (the "love algorithm")
+      function calculateLove(nameA, nameB) {
+        const str = (nameA + nameB).toLowerCase().replace(/\s+/g, '');
+        if (str.length === 0) return 0; // both empty
+
+        // base sum from char codes
+        let sum = 0;
+        for (let i = 0; i < str.length; i++) {
+          sum += str.charCodeAt(i);
+        }
+        // add some "magic" based on length and vowel count
+        const vowelCount = (str.match(/[aeiou]/gi) || []).length;
+        const consonantCount = str.length - vowelCount;
+        
+        // mix: sum, length, vowel/consonant ratio, and a pinch of randomness for fun
+        let raw = (sum % 67) + (vowelCount * 7) + (consonantCount * 3) + (str.length * 4);
+        raw = raw % 101;  // keep 0–100
+
+        // but also make it feel less random: add deterministic oscilliation using sum of first two chars if exist
+        if (str.length >= 2) {
+          raw = (raw + str.charCodeAt(0) + str.charCodeAt(1)) % 101;
+        } else if (str.length === 1) {
+          raw = (raw + str.charCodeAt(0) * 2) % 101;
+        }
+
+        // tiny extra: seed with name lengths product
+        const lenProd = (nameA.trim().length * nameB.trim().length) || 1;
+        raw = (raw + (lenProd % 30)) % 101;
+
+        // ensure at least a little variation even for same names
+        if (nameA.toLowerCase().trim() === nameB.toLowerCase().trim() && nameA.trim() !== '') {
+          raw = (raw + 42) % 101;  // self-love bonus
+        }
+
+        // if both inputs empty → 0, if one empty → low but not zero (realistic?)
+        if (nameA.trim() === '' && nameB.trim() === '') return 0;
+        if (nameA.trim() === '' || nameB.trim() === '') {
+          raw = Math.min(35, raw);  // lonely input max 35%
+        }
+        return Math.floor(raw);
+      }
+
+      // get message based on percent
+      function getMessage(percent) {
+        for (let m of messages) {
+          if (percent <= m.max) return m.text + ' ' + m.emoji;
+        }
+        return "💞 infinite love 💞"; // fallback
+      }
+
+      // update progress ring (dashoffset)
+      function setProgress(percent) {
+        const offset = circumference - (percent / 100) * circumference;
+        progressCircle.style.strokeDashoffset = offset;
+      }
+
+      // animate result appearance
+      function showResult(percent) {
+        // reveal container with fade & slide
+        resultContainer.classList.remove('opacity-0', 'translate-y-4');
+        resultContainer.classList.add('opacity-100', 'translate-y-0');
+
+        // update percentage text with a quick counter effect
+        let start = 0;
+        const duration = 600; // ms
+        const stepTime = 20;
+        const steps = duration / stepTime;
+        let step = 0;
+        const interval = setInterval(() => {
+          step++;
+          const current = Math.min(percent, Math.ceil((step / steps) * percent));
+          resultPercent.innerText = current + '%';
+          if (step >= steps) {
+            resultPercent.innerText = percent + '%';
+            clearInterval(interval);
+          }
+        }, stepTime);
+
+        // set progress ring
+        setProgress(percent);
+
+        // set message
+        loveMessage.innerText = getMessage(percent);
+
+        // extra glow based on high percentage
+        if (percent > 80) {
+          heartDisplay.classList.add('glow-pink');
+        } else {
+          heartDisplay.classList.remove('glow-pink');
+        }
+      }
+
+      // main calculation trigger
+      function onCalculate() {
+        const val1 = name1.value;
+        const val2 = name2.value;
+        const lovePercent = calculateLove(val1, val2);
+        showResult(lovePercent);
+      }
+
+      // event listener
+      calcBtn.addEventListener('click', onCalculate);
+
+      // optional: hit Enter in any input triggers calculate
+      name1.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') onCalculate();
+      });
+      name2.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') onCalculate();
+      });
+
+      // tiny extra: if both fields are empty, clicking button still shows 0% nicely.
+      // also set default demo example on window load (optional cute example)
+      window.addEventListener('load', () => {
+        // prefill with cute example (but you can clear)
+        name1.value = 'Taylor';
+        name2.value = 'Alex';
+        onCalculate(); // shows lovely percentage
+      });
+    })();
+  </script>
+</body>
+</html>
