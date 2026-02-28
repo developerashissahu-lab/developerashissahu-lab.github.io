@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENHANCED · gravity · trails · sounds · infinite balls</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #050b15;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 15px;
+        }
+        .game-container {
+            background: linear-gradient(145deg, #0f1d2f, #09121f);
+            border-radius: 48px;
+            padding: 25px;
+            box-shadow: 0 30px 45px -10px black, inset 0 2px 5px #4f8bbf;
+            border: 1px solid #2d577b;
+        }
+        canvas {
+            display: block;
+            width: 750px;
+            height: 750px;
+            border-radius: 38px;
+            background: #0c1727;
+            box-shadow: 0 0 0 4px #2c5475, 0 25px 35px rgba(0,0,0,0.9);
+            cursor: none;
+            transition: filter 0.2s;
+        }
+        canvas:active {
+            filter: brightness(1.1);
+        }
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin: 18px 8px 8px 8px;
+            color: #e2f0ff;
+            gap: 15px;
+        }
+        .ball-counter {
+            background: #1b3d5c;
+            padding: 10px 35px;
+            border-radius: 60px;
+            font-size: 2rem;
+            font-weight: 800;
+            border: 2px solid #78b9f0;
+            box-shadow: inset 0 2px 12px #b2daff;
+            font-family: 'Monaco', monospace;
+            letter-spacing: 2px;
+            backdrop-filter: blur(4px);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn {
+            background: #2a4f72;
+            border: none;
+            font-size: 1.1rem;
+            padding: 10px 25px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 6px 0 #143047, 0 8px 18px black;
+            transition: 0.06s ease;
+            border: 1px solid #6fa6db;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 1px 0 #143047, 0 8px 18px black;
+        }
+        .btn.toggle {
+            background: #3d5a3d;
+            border-color: #9fcc9f;
+        }
+        .feature-panel {
+            background: #112a3e90;
+            backdrop-filter: blur(8px);
+            border-radius: 50px;
+            padding: 10px 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            align-items: center;
+            border: 1px solid #5f94c2;
+            margin-top: 12px;
+            font-size: 0.95rem;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feature-item input[type="range"] {
+            width: 100px;
+            height: 5px;
+            border-radius: 10px;
+            background: #2e6191;
+            accent-color: #ffbe5c;
+        }
+        .feature-item span {
+            min-width: 45px;
+            color: #ffdb9f;
+        }
+        .badge-new {
+            background: #f09b2c;
+            color: black;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 40px;
+            font-weight: 800;
+            margin-left: 8px;
+        }
+        .sound-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .led {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #5eff7b;
+            box-shadow: 0 0 12px #00ff95;
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); background: #b0ffb0; }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+        .footer-note {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            color: #aac7ec;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <canvas id="enhancedCanvas" width="750" height="750"></canvas>
+    
+    <div class="dashboard">
+        <div class="ball-counter" id="superCounter">∞ 1</div>
+        <div class="controls">
+            <button class="btn" id="resetEnhanced"><span>⟲</span> restart</button>
+            <button class="btn toggle" id="toggleSoundBtn"><span>🔊</span> mute</button>
+            <button class="btn" id="gravityFlip"><span>🔄</span> flip gravity</button>
+        </div>
+    </div>
+
+    <div class="feature-panel">
+        <div class="feature-item">
+            <span>⚡ gravity</span>
+            <input type="range" id="gravitySlider" min="0" max="0.5" step="0.01" value="0.15">
+            <span id="gravityValue">0.15</span>
+        </div>
+        <div class="feature-item">
+            <span>🌀 trail</span>
+            <input type="range" id="trailSlider" min="0" max="0.8" step="0.05" value="0.3">
+            <span id="trailValue">0.3</span>
+        </div>
+        <div class="feature-item">
+            <span>🎵 bounce pitch</span>
+            <input type="range" id="pitchSlider" min="200" max="800" step="10" value="450">
+            <span id="pitchValue">450</span>
+        </div>
+        <div class="sound-indicator">
+            <div class="led"></div>
+            <span>pop!</span>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <span>✨ NEW: gravity · trails · size mix · rainbow mode · shockwaves · mouse attract ✨</span>
+        <span id="fps">🔥 60 fps</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('enhancedCanvas');
+    const ctx = canvas.getContext('2d');
+    const counterSpan = document.getElementById('superCounter');
+    const fpsSpan = document.getElementById('fps');
+
+    // ---------- dimensions & geometry ----------
+    const W = 750, H = 750;
+    const cx = 375, cy = 375;
+    const BIG_RADIUS = 330;            // big circle
+    const MIN_BALL_R = 5;
+    const MAX_BALL_R = 14;
+
+    // ---------- global settings ----------
+    let balls = [];
+    let gravity = 0.15;                 // default downward
+    let gravityDir = 1;                  // 1 = down, -1 = up
+    let trailFactor = 0.3;               // 0 = no trail, 0.8 = long trail
+    let soundEnabled = true;
+    let basePitch = 450;
+    let audioContext = null;
+    let lastTimestamp = 0;
+    let frameCount = 0;
+    let fps = 60;
+
+    // rainbow mode toggle (shifts colors)
+    let rainbowMode = true;
+    
+    // mouse attraction
+    let mouseX = cx, mouseY = cy;
+    let mouseInside = false;
+    let attractStrength = 0.02;          // gentle pull
+
+    // shockwave effect on reset/big bounces
+    let shockwave = { active: false, x: cx, y: cy, radius: 0, maxRadius: 200 };
+
+    // ---------- init audio ----------
+    function initAudio() {
+        if (audioContext) return;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+    }
+
+    // enhanced bounce sound with pitch variation
+    function playBounceSound(extraPitch = 1.0) {
+        if (!soundEnabled || !audioContext) return;
+        try {
+            const now = audioContext.currentTime;
+            const gainNode = audioContext.createGain();
+            gainNode.connect(audioContext.destination);
+            
+            const osc = audioContext.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = basePitch * (0.8 + Math.random() * 0.6) * extraPitch;
+            
+            osc.connect(gainNode);
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.09, now + 0.008);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+            
+            osc.start(now);
+            osc.stop(now + 0.18);
+            
+            // second harmonic
+            const osc2 = audioContext.createOscillator();
+            osc2.type = 'triangle';
+            osc2.frequency.value = basePitch * 0.45;
+            osc2.connect(gainNode);
+            osc2.start(now);
+            osc2.stop(now + 0.15);
+        } catch (e) {}
+    }
+
+    // ---------- ball factory with size variation ----------
+    function createBallInside() {
+        const maxDist = BIG_RADIUS - MAX_BALL_R - 5;
+        const r = Math.sqrt(Math.random()) * maxDist * 0.95;
+        const angle = Math.random() * 2 * Math.PI;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        
+        // random size between min and max
+        const size = MIN_BALL_R + Math.random() * (MAX_BALL_R - MIN_BALL_R);
+        
+        // random velocity
+        const speed = 1.2 + Math.random() * 3.5;
+        const velAngle = Math.random() * 2 * Math.PI;
+        const vx = Math.cos(velAngle) * speed;
+        const vy = Math.sin(velAngle) * speed;
+        
+        return {
+            x, y,
+            vx, vy,
+            r: size,
+            baseR: size,
+            color: `hsl(${Math.random() * 360}, 85%, 70%)`,
+            // trail positions (for fade effect)
+            trail: [],
+            maxTrail: 8,
+        };
+    }
+
+    // ---------- reset to one ball ----------
+    function resetToOneBall() {
+        balls = [ createBallInside() ];
+        shockwave.active = true;
+        shockwave.radius = 10;
+        shockwave.x = cx;
+        shockwave.y = cy;
+        updateCounter();
+    }
+
+    // ---------- update counter ----------
+    function updateCounter() {
+        counterSpan.innerText = `∞ ${balls.length}`;
+    }
+
+    // ---------- spawn new ball (unlimited) ----------
+    function spawnUnlimited() {
+        balls.push(createBallInside());
+        updateCounter();
+    }
+
+    // ---------- apply gravity ----------
+    function applyGravity() {
+        for (let b of balls) {
+            b.vy += gravity * gravityDir;
+        }
+    }
+
+    // ---------- update trail positions ----------
+    function updateTrails() {
+        if (trailFactor <= 0.02) return;
+        for (let b of balls) {
+            // store current position in trail
+            b.trail.push({ x: b.x, y: b.y, life: 1.0 });
+            if (b.trail.length > b.maxTrail) {
+                b.trail.shift();
+            }
+            // fade trail
+            for (let t of b.trail) {
+                t.life *= 0.92; // fade out
+            }
+        }
+    }
+
+    // ---------- mouse attraction (gentle) ----------
+    function applyMouseAttraction() {
+        if (!mouseInside) return;
+        for (let b of balls) {
+            const dx = mouseX - b.x;
+            const dy = mouseY - b.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 120 && dist > 5) {
+                const force = (120 - dist) / 120 * attractStrength;
+                b.vx += (dx / dist) * force;
+                b.vy += (dy / dist) * force;
+            }
+        }
+    }
+
+    // ---------- physics with bounce & spawn ----------
+    function updateBalls() {
+        let bounceCount = 0;
+        let totalBouncePitch = 1.0; // for sound variation
+
+        // apply forces
+        applyGravity();
+        applyMouseAttraction();
+        
+        // update positions + collisions
+        for (let i = 0; i < balls.length; i++) {
+            const b = balls[i];
+
+            // move
+            b.x += b.vx;
+            b.y += b.vy;
+
+            // vector from center
+            let dx = b.x - cx;
+            let dy = b.y - cy;
+            let dist = Math.hypot(dx, dy);
+
+            // boundary collision
+            if (dist + b.r >= BIG_RADIUS) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                const targetDist = BIG_RADIUS - b.r - 0.1;
+                b.x = cx + nx * targetDist;
+                b.y = cy + ny * targetDist;
+
+                const vDotN = b.vx * nx + b.vy * ny;
+                if (vDotN > 0) {
+                    b.vx -= 2 * vDotN * nx;
+                    b.vy -= 2 * vDotN * ny;
+                    
+                    // size change on bounce! (small variation)
+                    b.r = Math.min(MAX_BALL_R, Math.max(MIN_BALL_R, b.r + (Math.random() - 0.5) * 1.5));
+                }
+
+                bounceCount++;
+                totalBouncePitch *= 1.02; // slight pitch increase with many bounces
+            }
+
+            // ultra-safe clamp
+            dx = b.x - cx;
+            dy = b.y - cy;
+            dist = Math.hypot(dx, dy);
+            if (dist + b.r > BIG_RADIUS) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                b.x = cx + nx * (BIG_RADIUS - b.r - 0.1);
+                b.y = cy + ny * (BIG_RADIUS - b.r - 0.1);
+            }
+        }
+
+        // update trails after movement
+        updateTrails();
+
+        // play sounds
+        if (soundEnabled && bounceCount > 0) {
+            if (!audioContext) initAudio();
+            const playCount = Math.min(bounceCount, 20);
+            for (let i = 0; i < playCount; i++) {
+                setTimeout(() => {
+                    playBounceSound(totalBouncePitch);
+                }, i * 4);
+            }
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // spawn balls (unlimited)
+        for (let i = 0; i < bounceCount; i++) {
+            spawnUnlimited();
+        }
+
+        // shockwave update
+        if (shockwave.active) {
+            shockwave.radius += 12;
+            if (shockwave.radius > shockwave.maxRadius) {
+                shockwave.active = false;
+            }
+        }
+    }
+
+    // ---------- drawing with trails & effects ----------
+    function drawScene() {
+        ctx.clearRect(0, 0, W, H);
+
+        // background with subtle vignette
+        const grad = ctx.createRadialGradient(200, 200, 100, 600, 600, 1200);
+        grad.addColorStop(0, '#13273f');
+        grad.addColorStop(1, '#08121f');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // draw trails (semi-transparent)
+        if (trailFactor > 0.02) {
+            for (let b of balls) {
+                for (let t of b.trail) {
+                    if (t.life < 0.05) continue;
+                    ctx.globalAlpha = t.life * 0.4 * trailFactor;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, b.r * 0.8, 0, 2 * Math.PI);
+                    ctx.fillStyle = b.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = b.color;
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // big glowing circle
+        ctx.shadowColor = '#7abaff';
+        ctx.shadowBlur = 32;
+        ctx.beginPath();
+        ctx.arc(cx, cy, BIG_RADIUS, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        ctx.shadowBlur = 22;
+        ctx.strokeStyle = '#b2d9ff';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // inner glow ring
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(cx, cy, BIG_RADIUS-3, 0, 2*Math.PI);
+        ctx.strokeStyle = '#5f9bd1';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // draw shockwave
+        if (shockwave.active) {
+            ctx.shadowBlur = 30;
+            ctx.strokeStyle = '#ffd966';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(shockwave.x, shockwave.y, shockwave.radius, 0, 2*Math.PI);
+            ctx.stroke();
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+
+        // draw balls (with possible rainbow)
+        for (let b of balls) {
+            // rainbow mode: shift color over time
+            if (rainbowMode) {
+                const hue = (performance.now() * 0.02 + b.x + b.y) % 360;
+                ctx.fillStyle = `hsl(${hue}, 90%, 70%)`;
+            } else {
+                ctx.fillStyle = b.color;
+            }
+
+            ctx.shadowColor = '#fff9c0';
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // tiny highlight
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.arc(b.x - b.r*0.25, b.y - b.r*0.25, b.r*0.3, 0, 2*Math.PI);
+            ctx.fillStyle = '#ffffffcc';
+            ctx.fill();
+        }
+
+        // mouse attractor ring (if inside)
+        if (mouseInside) {
+            ctx.shadowBlur = 15;
+            ctx.strokeStyle = '#f0f0ff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 8]);
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, 35, 0, 2*Math.PI);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // center dot
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, 2*Math.PI);
+        ctx.fillStyle = '#f5f9ff80';
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+    }
+
+    // ---------- animation loop with FPS ----------
+    function enhancedLoop(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const delta = timestamp - lastTimestamp;
+        frameCount++;
+        
+        if (delta >= 1000) {
+            fps = frameCount;
+            fpsSpan.innerText = `🔥 ${fps} fps`;
+            frameCount = 0;
+            lastTimestamp = timestamp;
+        }
+
+        updateBalls();
+        drawScene();
+        requestAnimationFrame(enhancedLoop);
+    }
+
+    // ---------- mouse tracking ----------
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        mouseX = (e.clientX - rect.left) * scaleX;
+        mouseY = (e.clientY - rect.top) * scaleY;
+        
+        // check if inside big circle
+        const dx = mouseX - cx;
+        const dy = mouseY - cy;
+        mouseInside = Math.hypot(dx, dy) < BIG_RADIUS - 20;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        mouseInside = false;
+    });
+
+    // click to add ball with sound
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+        const dx = clickX - cx;
+        const dy = clickY - cy;
+        if (Math.hypot(dx, dy) < BIG_RADIUS - MAX_BALL_R - 5) {
+            const newBall = createBallInside();
+            newBall.x = clickX;
+            newBall.y = clickY;
+            balls.push(newBall);
+            updateCounter();
+            if (soundEnabled) {
+                if (!audioContext) initAudio();
+                playBounceSound(1.0);
+            }
+        }
+    });
+
+    // ---------- UI controls ----------
+    document.getElementById('resetEnhanced').addEventListener('click', resetToOneBall);
+
+    // sound toggle
+    const soundBtn = document.getElementById('toggleSoundBtn');
+    soundBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundBtn.innerHTML = soundEnabled ? '<span>🔊</span> mute' : '<span>🔈</span> unmute';
+        if (soundEnabled && !audioContext) {
+            initAudio();
+        }
+    });
+
+    // gravity flip
+    document.getElementById('gravityFlip').addEventListener('click', () => {
+        gravityDir *= -1;
+    });
+
+    // gravity slider
+    const gravSlider = document.getElementById('gravitySlider');
+    const gravVal = document.getElementById('gravityValue');
+    gravSlider.addEventListener('input', (e) => {
+        gravity = parseFloat(e.target.value);
+        gravVal.innerText = gravity.toFixed(2);
+    });
+
+    // trail slider
+    const trailSlider = document.getElementById('trailSlider');
+    const trailVal = document.getElementById('trailValue');
+    trailSlider.addEventListener('input', (e) => {
+        trailFactor = parseFloat(e.target.value);
+        trailVal.innerText = trailFactor.toFixed(2);
+        // adjust max trail length
+        for (let b of balls) {
+            b.maxTrail = Math.floor(5 + trailFactor * 12);
+        }
+    });
+
+    // pitch slider
+    const pitchSlider = document.getElementById('pitchSlider');
+    const pitchVal = document.getElementById('pitchValue');
+    pitchSlider.addEventListener('input', (e) => {
+        basePitch = parseInt(e.target.value);
+        pitchVal.innerText = basePitch;
+    });
+
+    // init first trail values
+    for (let b of balls) {
+        b.maxTrail = Math.floor(5 + trailFactor * 12);
+    }
+
+    // start
+    resetToOneBall();
+    
+    // init audio on first interaction
+    document.body.addEventListener('mousemove', function initOnFirstMove() {
+        if (!audioContext) {
+            initAudio();
+        }
+        document.body.removeEventListener('mousemove', initOnFirstMove);
+    }, { once: true });
+
+    enhancedLoop();
+})();
+</script>
+</body>
+</html>
