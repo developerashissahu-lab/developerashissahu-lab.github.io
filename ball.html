@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>balls with sound · bounce spawn · infinite</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b1422;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .universe {
+            background: #0e1e2f;
+            border-radius: 42px;
+            padding: 28px;
+            box-shadow: 0 30px 40px -10px black, inset 0 1px 3px #86b9ee;
+        }
+        canvas {
+            display: block;
+            width: 640px;
+            height: 640px;
+            border-radius: 32px;
+            background: #0d1a29;
+            box-shadow: 0 0 0 4px #2c5070, 0 25px 35px rgba(0,0,0,0.9);
+            cursor: crosshair;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 12px 8px 12px;
+            color: #d1e9ff;
+        }
+        .counter {
+            background: #1e3f5e;
+            padding: 8px 32px;
+            border-radius: 60px;
+            font-size: 1.9rem;
+            font-weight: 700;
+            border: 2px solid #5fa3df;
+            box-shadow: inset 0 2px 8px #c0e2ff;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        .actions {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2rem;
+        }
+        .badge::before {
+            content: "∞";
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fcd34d;
+            text-shadow: 0 0 15px orange;
+        }
+        button {
+            background: #2e5577;
+            border: none;
+            font-size: 1.3rem;
+            padding: 12px 36px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 7px 0 #153249, 0 10px 25px black;
+            transition: 0.07s ease;
+            border: 1px solid #79b0e0;
+            cursor: pointer;
+        }
+        button:active {
+            transform: translateY(7px);
+            box-shadow: 0 1px 0 #153249, 0 10px 25px black;
+        }
+        .hint {
+            font-size: 1.1rem;
+            color: #b3d6f0;
+            margin-left: 15px;
+            font-style: italic;
+        }
+        .sound-indicator {
+            color: #ffbe76;
+            font-size: 0.95rem;
+            margin-top: 8px;
+            text-align: center;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .sound-indicator span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4aff78;
+            box-shadow: 0 0 10px #00ff88;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); background: #a0ffb0; }
+            100% { opacity: 0.5; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+<div class="universe">
+    <canvas id="infiniteCanvas" width="640" height="640"></canvas>
+    <div class="stats">
+        <div class="counter" id="infCounter">∞ 1</div>
+        <div class="actions">
+            <span class="badge">bounce = new ball</span>
+            <button id="resetInfinity">⟲ restart</button>
+        </div>
+    </div>
+    <div class="hint">⚡ unlimited balls · every bounce adds one · with SOUND ⚡</div>
+    <div class="sound-indicator">
+        <span></span> bounce sounds active (gentle pops) 
+        <button id="toggleSound" style="background:#3d6b8f; padding:5px 15px; font-size:1rem; box-shadow:0 3px 0 #153249;">🔊 mute</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('infiniteCanvas');
+    const ctx = canvas.getContext('2d');
+    const counterSpan = document.getElementById('infCounter');
+    const toggleBtn = document.getElementById('toggleSound');
+
+    // ---------- fixed geometry: big circle ----------
+    const W = 640, H = 640;
+    const cx = 320, cy = 320;          // center
+    const BIG_RADIUS = 290;             // visible solid circle
+    const BALL_R = 7;                   // small ball radius
+
+    // maximum allowed distance from center so ball stays fully inside
+    const MAX_DIST = BIG_RADIUS - BALL_R - 0.05;
+
+    // ---------- sound setup ----------
+    let soundEnabled = true;
+    let audioContext = null;
+    
+    // Initialize audio context on first user interaction (required by browsers)
+    function initAudio() {
+        if (audioContext) return;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log("Web Audio API not supported");
+        }
+    }
+
+    // Play a soft "pop" sound
+    function playBounceSound() {
+        if (!soundEnabled || !audioContext) return;
+        
+        // Limit sound frequency - don't play if too many bounces per frame
+        // but we'll let them all play for now - browser will mix them
+        
+        try {
+            const now = audioContext.currentTime;
+            const gainNode = audioContext.createGain();
+            gainNode.connect(audioContext.destination);
+            
+            // Create oscillator for a simple sine wave pop
+            const osc = audioContext.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = 380 + Math.random() * 100; // vary pitch slightly
+            
+            // Connect oscillator to gain
+            osc.connect(gainNode);
+            
+            // Envelope: quick attack, quick release
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.08, now + 0.01); // quick fade in
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15); // fade out
+            
+            // Start and stop
+            osc.start(now);
+            osc.stop(now + 0.15);
+            
+            // Add a second harmonic for richness
+            const osc2 = audioContext.createOscillator();
+            osc2.type = 'triangle';
+            osc2.frequency.value = 180 + Math.random() * 40;
+            osc2.connect(gainNode);
+            osc2.start(now);
+            osc2.stop(now + 0.12);
+            
+        } catch (e) {
+            // Silently fail if audio fails
+        }
+    }
+
+    // Toggle sound on/off
+    toggleBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        toggleBtn.textContent = soundEnabled ? "🔊 mute" : "🔈 unmute";
+        
+        // Initialize audio on first unmute
+        if (soundEnabled && !audioContext) {
+            initAudio();
+            // Try to resume if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+    });
+
+    // Try to initialize audio on any user interaction with canvas too
+    canvas.addEventListener('click', () => {
+        if (!audioContext) {
+            initAudio();
+        } else if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    });
+
+    // ---------- array holds all balls (infinite, no limit) ----------
+    let balls = [];
+
+    // ---------- helper: random velocity with decent energy ----------
+    function randomVelocity() {
+        const speed = 1.6 + Math.random() * 3.0;     // range 1.6 ~ 4.6
+        const angle = Math.random() * 2 * Math.PI;
+        return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+    }
+
+    // ---------- create ball strictly inside the big circle ----------
+    function createBallInside() {
+        // random position (uniform inside disk)
+        const r = Math.sqrt(Math.random()) * MAX_DIST * 0.98;  // 0.98 margin to avoid accidental boundary
+        const angle = Math.random() * 2 * Math.PI;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        const { vx, vy } = randomVelocity();
+        return {
+            x, y,
+            vx, vy,
+            r: BALL_R,
+            color: `hsl(${Math.random() * 360}, 85%, 70%)`,
+        };
+    }
+
+    // ---------- reset to exactly one ball ----------
+    function resetToOneBall() {
+        balls = [ createBallInside() ];
+        updateCounter();
+    }
+
+    // ---------- update counter display ----------
+    function updateCounter() {
+        counterSpan.innerText = `∞ ${balls.length}`;
+    }
+
+    // ---------- spawn new ball (no limits, no shift, just push) ----------
+    function spawnUnlimited() {
+        balls.push(createBallInside());
+        updateCounter();
+    }
+
+    // ---------- physics: move, reflect, count bounces, reposition perfectly ----------
+    function updateBallsUnlimited() {
+        let bounceCount = 0;
+
+        for (let i = 0; i < balls.length; i++) {
+            const b = balls[i];
+
+            // move
+            b.x += b.vx;
+            b.y += b.vy;
+
+            // vector from center
+            let dx = b.x - cx;
+            let dy = b.y - cy;
+            let dist = Math.hypot(dx, dy);
+
+            // check collision: if any part touches or crosses the big boundary
+            if (dist + b.r >= BIG_RADIUS) {
+                // normal (from center to ball)
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                // reposition exactly at inner boundary (with sub-pixel margin to avoid re-trigger)
+                const targetDist = BIG_RADIUS - b.r - 0.05;
+                b.x = cx + nx * targetDist;
+                b.y = cy + ny * targetDist;
+
+                // reflect outward velocity
+                const vDotN = b.vx * nx + b.vy * ny;
+                if (vDotN > 0) {
+                    b.vx -= 2 * vDotN * nx;
+                    b.vy -= 2 * vDotN * ny;
+                }
+
+                bounceCount++;
+            }
+
+            // ultra-safe double-check: if somehow still outside (numerical error), clamp again
+            dx = b.x - cx;
+            dy = b.y - cy;
+            dist = Math.hypot(dx, dy);
+            if (dist + b.r > BIG_RADIUS) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                b.x = cx + nx * (BIG_RADIUS - b.r - 0.05);
+                b.y = cy + ny * (BIG_RADIUS - b.r - 0.05);
+                // no extra bounce count
+            }
+        }
+
+        // --- play sounds for bounces (if enabled) ---
+        if (soundEnabled && bounceCount > 0) {
+            // Initialize audio if needed
+            if (!audioContext) {
+                initAudio();
+            }
+            
+            // Play sounds (limit to 15 per frame to avoid overwhelming)
+            const playCount = Math.min(bounceCount, 15);
+            for (let i = 0; i < playCount; i++) {
+                // Slight delay between sounds in same frame (3ms spacing)
+                setTimeout(() => {
+                    playBounceSound();
+                }, i * 3);
+            }
+            
+            // Also resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // --- spawn new balls: one new ball for every bounce that occurred ---
+        // absolutely no limit. if bounceCount = 1000, we add 1000 balls (beware performance)
+        for (let i = 0; i < bounceCount; i++) {
+            spawnUnlimited();
+        }
+    }
+
+    // ---------- drawing ----------
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // deep space gradient
+        const grad = ctx.createRadialGradient(150, 150, 50, 500, 500, 900);
+        grad.addColorStop(0, '#1a314a');
+        grad.addColorStop(1, '#0c1625');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // faint grid
+        ctx.strokeStyle = '#1f3349';
+        ctx.lineWidth = 0.6;
+        for (let i = 0; i <= W; i += 40) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, H);
+            ctx.strokeStyle = '#1d3045';
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(W, i);
+            ctx.stroke();
+        }
+
+        // big glowing circle (boundary) — very visible
+        ctx.shadowColor = '#7abaff';
+        ctx.shadowBlur = 30;
+        ctx.beginPath();
+        ctx.arc(cx, cy, BIG_RADIUS, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#ecf9ff';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        ctx.shadowBlur = 20;
+        ctx.strokeStyle = '#aad0ff';
+        ctx.lineWidth = 3.2;
+        ctx.stroke();
+
+        // inner ring
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(cx, cy, BIG_RADIUS-2, 0, 2*Math.PI);
+        ctx.strokeStyle = '#659ed4';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+
+        // draw all balls (no limit)
+        for (let b of balls) {
+            // main fill
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, 2 * Math.PI);
+            ctx.fillStyle = b.color;
+            ctx.shadowColor = '#ffffff90';
+            ctx.shadowBlur = 14;
+            ctx.fill();
+
+            // tiny highlight
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(b.x-2, b.y-2, 2, 0, 2*Math.PI);
+            ctx.fillStyle = '#ffffffdd';
+            ctx.fill();
+        }
+
+        // tiny center dot
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3, 0, 2*Math.PI);
+        ctx.fillStyle = '#f0f9ff70';
+        ctx.fill();
+    }
+
+    // ---------- animation loop ----------
+    function infiniteLoop() {
+        updateBallsUnlimited();   // physics + infinite spawn + sound
+        draw();
+        requestAnimationFrame(infiniteLoop);
+    }
+
+    // ---------- start ----------
+    resetToOneBall();
+
+    // reset button
+    document.getElementById('resetInfinity').addEventListener('click', () => {
+        resetToOneBall();
+    });
+
+    // optional click: manually add ball (inside only)
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
+
+        const dx = mouseX - cx;
+        const dy = mouseY - cy;
+        const dist = Math.hypot(dx, dy);
+        if (dist < BIG_RADIUS - BALL_R - 5) {
+            const { vx, vy } = randomVelocity();
+            balls.push({
+                x: mouseX,
+                y: mouseY,
+                vx, vy,
+                r: BALL_R,
+                color: `hsl(${Math.random()*360}, 85%, 70%)`
+            });
+            updateCounter();
+            
+            // Play a sound for manual add too
+            if (soundEnabled) {
+                if (!audioContext) initAudio();
+                playBounceSound();
+            }
+        }
+    });
+
+    // Initialize audio on first mouse move (to comply with autoplay policies)
+    document.body.addEventListener('mousemove', function initOnMove() {
+        if (!audioContext) {
+            initAudio();
+        }
+        document.body.removeEventListener('mousemove', initOnMove);
+    }, { once: true });
+
+    // start the infinite universe
+    infiniteLoop();
+})();
+</script>
+</body>
+  </html>
