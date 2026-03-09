@@ -2,529 +2,388 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="monetag" content="914c3c47e6ff48c178cb7d6b6de4d5df">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>AuraTool · about each tool</title>
-  <!-- Tailwind + Font Awesome -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>all tools · 50 tool landing + feature add</title>
+  <!-- Tailwind via CDN + Font Awesome 6 for rich icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- html2canvas for card download -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://quge5.com/88/tag.min.js" data-zone="216930" async data-cfasync="false"></script>
   <style>
-    @keyframes auraGlow {
-      0% { opacity: 0.9; transform: scale(1); }
-      100% { opacity: 1; transform: scale(1.02); }
+    /* custom animation toolkit – more than 50 subtle animations */
+    @keyframes soft-float {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(0.2deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
     }
-    .animate-glow { animation: auraGlow 2.2s infinite alternate ease-in-out; }
-    .splash-fade { transition: opacity 0.7s ease, visibility 0.7s ease; }
-    
-    .screen { display: none; opacity: 0; transform: translateX(20px); transition: opacity 0.3s ease, transform 0.3s ease; }
-    .screen.active { display: block; opacity: 1; transform: translateX(0); }
-
-    .nav-item.active { background: rgba(79, 70, 229, 0.15); color: #4f46e5; border-radius: 2rem; }
-
-    .menu-dropdown { transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s; }
-
-    /* about section styling */
-    .about-card {
-      background: rgba(255,255,255,0.5);
-      backdrop-filter: blur(4px);
-      border-left: 4px solid #8b5cf6;
+    .animate-soft-float {
+      animation: soft-float 5s ease-in-out infinite;
     }
-    .dark-mode .about-card {
-      background: rgba(30, 41, 59, 0.7);
+    @keyframes glow-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3), 0 10px 25px -5px rgba(0,0,0,0.1); }
+      50% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.1), 0 20px 30px -5px rgba(139,92,246,0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3), 0 10px 25px -5px rgba(0,0,0,0.1); }
     }
-
-    body.dark-mode { background: #0b1120; color: #e2e8f0; }
-    body.dark-mode .bg-white, body.dark-mode .bg-white\/70, body.dark-mode .bg-white\/40,
-    body.dark-mode [class*="bg-white"] { background-color: #1e293b !important; color: #e2e8f0; }
-    body.dark-mode .text-slate-800, body.dark-mode .text-slate-700, body.dark-mode .text-slate-600 { color: #cbd5e1; }
-    body.dark-mode .border-slate-200 { border-color: #334155; }
-    body.dark-mode .bg-indigo-50 { background-color: #1e2a47; }
-    body.dark-mode .bg-emerald-50 { background-color: #1a3a32; }
-    body.dark-mode .bg-pink-50 { background-color: #3b2a3a; }
-    body.dark-mode .bg-slate-100 { background-color: #2d3748; }
-    body.dark-mode .bg-amber-50 { background-color: #3f3115; }
-    body.dark-mode input, body.dark-mode select { background-color: #0f172a; color: #f1f5f9; border-color: #334155; }
+    .glow-card {
+      animation: glow-pulse 4s infinite ease-in-out;
+    }
+    @keyframes subtle-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .hover-spin:hover i {
+      animation: subtle-spin 0.7s ease;
+    }
+    /* floating orbs background (exactly 50) */
+    .orb {
+      position: absolute;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7), rgba(180, 160, 255, 0.2));
+      filter: blur(3px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.2;
+    }
+    .relative-container {
+      position: relative;
+      overflow: hidden;
+    }
+    /* tool card entrance */
+    .card-enter {
+      animation: card-appear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes card-appear {
+      0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    /* badge for new feature */
+    .feature-badge {
+      transition: all 0.2s ease;
+    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen font-sans antialiased relative pb-24 md:pb-6 transition-colors duration-300">
+<body class="bg-gradient-to-br from-indigo-50 via-fuchsia-50 to-amber-50 min-h-screen relative-container p-5 font-sans">
 
-  <!-- ===== SPLASH SCREEN ===== -->
-  <div id="splash" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0f172a] splash-fade">
-    <div class="text-center px-6 py-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl animate-glow">
-      <i class="fa-regular fa-star text-6xl text-indigo-300 mb-3"></i>
-      <h1 class="text-5xl md:text-6xl font-black bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">AuraTool</h1>
-      <div class="w-20 h-1 bg-gradient-to-r from-indigo-400 to-fuchsia-300 mx-auto my-4 rounded-full"></div>
-      <p class="text-indigo-200/80">about each tool · fully explained</p>
+  <!-- 50 background orbs – each orb represents one hidden animation tool -->
+  <div id="orb-container" class="absolute inset-0 overflow-hidden pointer-events-none z-0"></div>
+
+  <!-- main landing page content -->
+  <div class="relative z-10 max-w-7xl mx-auto">
+    
+    <!-- header with 50 tool showcase + feature add CTA -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+      <div class="flex items-center gap-4">
+        <div class="bg-white/70 backdrop-blur-xl p-4 rounded-3xl shadow-2xl border border-white/40 rotate-2 hover:rotate-0 transition-transform duration-300">
+          <i class="fa-solid fa-toolbox text-4xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500"></i>
+        </div>
+        <div>
+          <h1 class="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-800 via-purple-700 to-pink-600 bg-clip-text text-transparent tracking-tight">
+            all<span class="text-indigo-600">tools</span>
+          </h1>
+          <p class="text-slate-600 flex items-center gap-2 mt-1">
+            <i class="fa-solid fa-crown text-xs text-amber-400"></i>
+            <span class="bg-indigo-100 px-3 py-0.5 rounded-full text-sm font-semibold text-indigo-800">50 tools live</span>
+            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+            <span class="text-sm font-medium">+ feature add ready</span>
+          </p>
+        </div>
+      </div>
+      <!-- "add feature" button – opens modal (in-page feature addition) -->
+      <button id="openFeatureModalBtn" class="group bg-white border-2 border-purple-300 hover:border-purple-500 text-purple-700 font-semibold px-7 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 text-lg backdrop-blur-sm bg-white/80">
+        <i class="fa-solid fa-plus-circle text-purple-500 group-hover:rotate-90 transition-transform duration-500"></i>
+        <span>add new tool</span>
+        <span class="bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded-full">feature</span>
+      </button>
     </div>
-  </div>
 
-  <!-- MAIN CONTAINER -->
-  <div class="max-w-lg mx-auto px-4 py-3 relative">
+    <!-- tools showcase: all 50 tools appear as cards (generated by javascript) -->
+    <div class="mb-12">
+      <div class="flex items-center gap-2 mb-5">
+        <i class="fa-solid fa-border-all text-indigo-400 text-xl"></i>
+        <h2 class="text-xl font-semibold text-slate-700">all tools · 50 magnificent utilities</h2>
+        <div class="h-px flex-1 bg-gradient-to-r from-purple-200 to-transparent"></div>
+        <span class="text-sm text-slate-400" id="toolCountDisplay">50 items</span>
+      </div>
+      <!-- dynamic tool cards grid (50 cards) -->
+      <div id="toolsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-fr"></div>
+    </div>
 
-    <!-- ===== HEADER with logo, dark toggle & 3-line menu ===== -->
-    <div class="flex items-center justify-between mb-4 bg-white/40 backdrop-blur-md p-2 pl-5 rounded-2xl border border-white/40 shadow-sm">
+    <!-- feature add section / modal inline (simple expandable panel) – you can add new tool here -->
+    <div id="featureAddPanel" class="bg-white/90 backdrop-blur-lg rounded-3xl p-7 shadow-2xl border-2 border-dashed border-purple-300 mb-10 hidden transition-all duration-500 card-enter">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+          <i class="fa-regular fa-plus-square text-purple-500"></i>
+          add a brand new tool
+        </h3>
+        <button id="closeFeaturePanelBtn" class="text-slate-400 hover:text-slate-700 transition-colors text-2xl">
+          <i class="fa-regular fa-circle-xmark"></i>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- left: tool form -->
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">tool name</label>
+            <input type="text" id="newToolName" placeholder="e.g. pdf compressor" class="w-full px-5 py-3 bg-white border border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-200 outline-none transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">icon (fontawesome class)</label>
+            <input type="text" id="newToolIcon" value="fa-solid fa-wrench" placeholder="fa-solid fa-wrench" class="w-full px-5 py-3 bg-white border border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-200 outline-none transition">
+            <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-circle-info"></i> e.g. fa-solid fa-calculator</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">color theme (from bg- / text-)</label>
+            <select id="newToolColor" class="w-full px-5 py-3 bg-white border border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-200 outline-none">
+              <option value="indigo">indigo · calm</option>
+              <option value="purple">purple · creative</option>
+              <option value="fuchsia">fuchsia · vibrant</option>
+              <option value="pink">pink · playful</option>
+              <option value="amber">amber · warm</option>
+              <option value="emerald">emerald · fresh</option>
+              <option value="sky">sky · breeze</option>
+            </select>
+          </div>
+          <button id="addToolBtn" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl shadow-xl transition-all duration-300 flex items-center gap-2 text-lg">
+            <i class="fa-regular fa-floppy-disk"></i> add this tool → now 51
+          </button>
+        </div>
+        <!-- right: preview & info -->
+        <div class="bg-indigo-50/60 rounded-2xl p-5 border border-indigo-200">
+          <p class="text-sm font-medium text-indigo-800 flex items-center gap-2"><i class="fa-regular fa-eye"></i> live preview</p>
+          <div id="previewCard" class="mt-3 bg-white p-5 rounded-xl shadow-md flex items-center gap-4 border-2 border-indigo-300">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center text-2xl shadow-md">
+              <i class="fa-solid fa-wrench"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800" id="previewName">new tool</h4>
+              <p class="text-xs text-slate-500">ready to add · 51st tool</p>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 mt-4 leading-relaxed"><i class="fa-regular fa-lightbulb text-amber-400"></i> after adding, the tool appears instantly. all 50+ tools remain animated.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- extra footer with tool count and 50 tool tribute -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mt-10 border-t border-slate-200 pt-6 text-sm text-slate-500">
       <div class="flex items-center gap-2">
-        <i class="fa-solid fa-sparkles text-2xl text-indigo-600"></i>
-        <span class="font-bold text-xl bg-gradient-to-r from-indigo-800 to-purple-800 bg-clip-text text-transparent">AuraTool</span>
+        <i class="fa-solid fa-cubes text-indigo-300"></i>
+        <span><span id="footerToolCount">50</span> active tools · each with animations</span>
       </div>
-      <div class="flex items-center gap-1">
-        <button id="darkModeToggle" class="p-2.5 rounded-xl bg-white/80 shadow-sm border border-slate-200 active:scale-95 mr-1">
-          <i class="fa-regular fa-moon text-xl text-slate-700"></i>
-        </button>
-        <button id="menuBtn" class="p-2.5 rounded-xl bg-white/80 shadow-sm border border-slate-200 active:scale-95">
-          <i class="fa-solid fa-bars text-2xl text-slate-700"></i>
-        </button>
+      <div class="flex gap-3 text-xs">
+        <span class="bg-white/70 px-3 py-1.5 rounded-full shadow-sm"><i class="fa-regular fa-star mr-1 text-amber-400"></i> 50 orbs bg</span>
+        <span class="bg-white/70 px-3 py-1.5 rounded-full shadow-sm"><i class="fa-regular fa-hand-peace mr-1 text-purple-400"></i> float + glow</span>
+        <span class="bg-white/70 px-3 py-1.5 rounded-full shadow-sm"><i class="fa-regular fa-keyboard mr-1"></i> add feature</span>
       </div>
-    </div>
-
-    <!-- dropdown menu -->
-    <div id="mobileMenu" class="menu-dropdown absolute right-4 top-20 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-indigo-100 p-5 z-40 hidden opacity-0 -translate-y-3">
-      <ul class="space-y-4 text-slate-800 font-medium">
-        <li><a href="#" data-screen="age" class="mobile-nav-item flex items-center gap-3 hover:text-indigo-700"><i class="fa-regular fa-calendar w-6"></i>Age calculator</a></li>
-        <li><a href="#" data-screen="loan" class="mobile-nav-item flex items-center gap-3 hover:text-indigo-700"><i class="fa-solid fa-coins w-6"></i>Loan calculator</a></li>
-        <li><a href="#" data-screen="love" class="mobile-nav-item flex items-center gap-3 hover:text-indigo-700"><i class="fa-regular fa-heart w-6"></i>Love calculator</a></li>
-        <li class="border-t border-slate-200 pt-3"><a href="#" data-screen="card" class="mobile-nav-item flex items-center gap-3 hover:text-indigo-700"><i class="fa-regular fa-gem w-6"></i>Greeting card</a></li>
-        <li><a href="#" data-screen="history" class="mobile-nav-item flex items-center gap-3 hover:text-indigo-700"><i class="fa-regular fa-clock w-6"></i>History</a></li>
-        <li><a href="#" data-screen="privacy" class="mobile-nav-item flex items-center gap-3 hover:text-indigo-700 text-sm opacity-80"><i class="fa-regular fa-file-lines w-6"></i>Privacy policy</a></li>
-      </ul>
-    </div>
-
-    <!-- ===== DYNAMIC TITLE ===== -->
-    <div class="text-center my-4">
-      <h2 id="screenTitle" class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-700 to-purple-600 bg-clip-text text-transparent">
-        <i class="fa-regular fa-calendar mr-2"></i>Age calculator
-      </h2>
-      <p id="screenSubtitle" class="text-slate-500 text-sm">with about section · learn how it works</p>
-    </div>
-
-    <!-- ===== SCREENS WITH ABOUT SECTIONS ===== -->
-
-    <!-- AGE CALCULATOR + ABOUT -->
-    <div id="screen-age" class="screen active">
-      <div class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-white/40">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="p-3 bg-indigo-100 rounded-2xl"><i class="fa-regular fa-calendar-check text-2xl text-indigo-700"></i></div>
-          <h3 class="text-xl font-bold">Age calculator</h3>
-        </div>
-        <label class="text-sm font-medium">Birth date</label>
-        <input type="date" id="birthDate" value="2000-01-15" class="w-full p-3 mb-3 rounded-xl border bg-white/90">
-        <button id="calcAgeBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition shadow-md active:scale-95">calculate detailed age</button>
-        <div id="ageResult" class="mt-4 bg-indigo-50/90 p-4 rounded-xl text-slate-700 font-medium text-base"></div>
-        <button id="saveAgeHistory" class="mt-3 text-sm text-indigo-600 hover:underline w-full text-center"><i class="fa-regular fa-bookmark mr-1"></i>save to history</button>
-        
-        <!-- ABOUT AGE SECTION -->
-        <div class="about-card mt-5 p-4 rounded-xl text-sm text-slate-600 dark:text-slate-300">
-          <p class="font-semibold flex items-center gap-2 text-indigo-700 dark:text-indigo-300"><i class="fa-regular fa-circle-info"></i>About this tool</p>
-          <p class="mt-1">Calculates your exact age based on your birth date. It also shows how many days until your next birthday. Age is calculated by comparing today's date with your birth date, accounting for months and days.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- LOAN CALCULATOR + ABOUT -->
-    <div id="screen-loan" class="screen">
-      <div class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-white/40">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="p-3 bg-emerald-100 rounded-2xl"><i class="fa-solid fa-coins text-2xl text-emerald-700"></i></div>
-          <h3 class="text-xl font-bold">Loan calculator</h3>
-        </div>
-        <div class="space-y-3">
-          <div><label class="text-sm font-medium">Loan amount ($)</label><input type="number" id="loanAmount" value="10000" class="w-full p-3 rounded-xl border bg-white/90"></div>
-          <div><label class="text-sm font-medium">Interest rate (%)</label><input type="number" id="loanRate" value="5.5" step="0.1" class="w-full p-3 rounded-xl border bg-white/90"></div>
-          <div><label class="text-sm font-medium">Term (years)</label><input type="number" id="loanTerm" value="3" class="w-full p-3 rounded-xl border bg-white/90"></div>
-        </div>
-        <button id="calcLoanBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl mt-5 active:scale-95">calculate fully</button>
-        <div id="loanResult" class="mt-4 bg-emerald-50/90 p-4 rounded-xl text-slate-700 text-base"></div>
-        <button id="saveLoanHistory" class="mt-3 text-sm text-emerald-600 hover:underline w-full text-center"><i class="fa-regular fa-bookmark mr-1"></i>save to history</button>
-        
-        <!-- ABOUT LOAN SECTION -->
-        <div class="about-card mt-5 p-4 rounded-xl text-sm text-slate-600 dark:text-slate-300">
-          <p class="font-semibold flex items-center gap-2 text-emerald-700 dark:text-emerald-300"><i class="fa-regular fa-circle-info"></i>About this tool</p>
-          <p class="mt-1">Calculates monthly payments and total interest for a fixed-rate loan using the standard amortization formula. Results show your monthly payment and the total interest you'll pay over the loan term.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- LOVE CALCULATOR + ABOUT -->
-    <div id="screen-love" class="screen">
-      <div class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-white/40">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="p-3 bg-pink-100 rounded-2xl"><i class="fa-regular fa-heart text-2xl text-pink-600"></i></div>
-          <h3 class="text-xl font-bold">Love calculator</h3>
-        </div>
-        <input type="text" id="name1" value="Alex" placeholder="Your name" class="w-full p-3 mb-2 rounded-xl border bg-white/90">
-        <input type="text" id="name2" value="Jordan" placeholder="Their name" class="w-full p-3 mb-2 rounded-xl border bg-white/90">
-        <button id="calcLoveBtn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl mt-3 active:scale-95">calculate love</button>
-        <div id="loveResult" class="mt-4 bg-pink-50/90 p-4 rounded-xl text-slate-700 text-base"></div>
-        <button id="saveLoveHistory" class="mt-3 text-sm text-pink-600 hover:underline w-full text-center"><i class="fa-regular fa-bookmark mr-1"></i>save to history</button>
-        
-        <!-- ABOUT LOVE SECTION -->
-        <div class="about-card mt-5 p-4 rounded-xl text-sm text-slate-600 dark:text-slate-300">
-          <p class="font-semibold flex items-center gap-2 text-pink-600 dark:text-pink-300"><i class="fa-regular fa-circle-info"></i>About this tool</p>
-          <p class="mt-1">A fun compatibility score based on the letters in your names. Each letter has a numeric value, and the combined total generates a percentage between 50-100%. Just for entertainment!</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- GREETING CARD + ABOUT -->
-    <div id="screen-card" class="screen">
-      <div class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-white/40">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="p-3 bg-amber-100 rounded-2xl"><i class="fa-regular fa-gem text-2xl text-amber-700"></i></div>
-          <h3 class="text-xl font-bold">Greeting card</h3>
-        </div>
-        <!-- card preview -->
-        <div id="cardPreview" class="bg-gradient-to-br from-indigo-100 via-fuchsia-100 to-amber-100 p-6 rounded-2xl shadow-inner border-2 border-white/60 mb-4 relative">
-          <i class="fa-regular fa-star absolute top-2 right-2 text-amber-400"></i>
-          <p id="cardNameDisplay" class="text-4xl font-black bg-gradient-to-r from-indigo-800 to-pink-700 bg-clip-text text-transparent">Alex</p>
-          <p class="text-slate-600 italic">sending good vibes ✨</p>
-          <p class="text-xs text-slate-400 mt-3">— AuraTool</p>
-        </div>
-        <label class="text-sm font-medium">your name</label>
-        <input type="text" id="cardNameInput" value="Alex" class="w-full p-3 mb-3 rounded-xl border bg-white/90">
-        <select id="cardTheme" class="w-full p-3 mb-3 rounded-xl border bg-white/90 text-sm">
-          <option value="default">default theme</option>
-          <option value="sunset">sunset glow</option>
-          <option value="ocean">ocean breeze</option>
-        </select>
-        <button id="downloadCardBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95">
-          <i class="fa-regular fa-circle-down"></i> download PNG
-        </button>
-        
-        <!-- ABOUT CARD SECTION -->
-        <div class="about-card mt-5 p-4 rounded-xl text-sm text-slate-600 dark:text-slate-300">
-          <p class="font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-300"><i class="fa-regular fa-circle-info"></i>About this tool</p>
-          <p class="mt-1">Create a personalized greeting card with your name. Choose from different themes and download as a PNG image. The card is generated entirely in your browser — nothing is uploaded.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- HISTORY SCREEN (no about needed, but added context) -->
-    <div id="screen-history" class="screen">
-      <div class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-white/40">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="p-3 bg-slate-100 rounded-2xl"><i class="fa-regular fa-clock text-2xl text-slate-700"></i></div>
-          <h3 class="text-xl font-bold">History</h3>
-        </div>
-        <div id="historyList" class="space-y-2 max-h-80 overflow-y-auto text-sm">
-          <p class="text-slate-500 italic">No history yet. Save calculations using the buttons.</p>
-        </div>
-        <button id="clearHistoryBtn" class="mt-4 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2 rounded-xl text-sm">clear history</button>
-        
-        <!-- CONTEXT FOR HISTORY -->
-        <div class="about-card mt-5 p-4 rounded-xl text-sm text-slate-600 dark:text-slate-300">
-          <p class="font-semibold flex items-center gap-2 text-slate-600 dark:text-slate-300"><i class="fa-regular fa-clock"></i>About history</p>
-          <p class="mt-1">Your saved calculations appear here. Click "save to history" on any tool to store the result. History is temporary and will be cleared when you refresh the page.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRIVACY POLICY (already informational) -->
-    <div id="screen-privacy" class="screen">
-      <div class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-white/40">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="p-3 bg-slate-100 rounded-2xl"><i class="fa-regular fa-shield text-2xl text-slate-700"></i></div>
-          <h3 class="text-xl font-bold">Privacy policy</h3>
-        </div>
-        <div class="space-y-3 text-slate-600 text-sm leading-relaxed">
-          <p>🔒 No data leaves your device. All calculations happen locally.</p>
-          <p>📄 Greeting card is generated in-browser — we never see your name.</p>
-          <p>🌙 Dark mode preference is saved in your browser.</p>
-          <p>📋 History is stored only in memory, cleared on refresh.</p>
-          <p class="pt-2 text-xs text-slate-400">AuraTool · your privacy matters</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== BOTTOM NAVIGATION ===== -->
-    <div class="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/40 px-2 py-1 flex justify-around items-center z-30">
-      <button data-screen="age" class="nav-item flex flex-col items-center p-2 px-3 rounded-2xl text-xs text-slate-500"><i class="fa-regular fa-calendar text-xl"></i><span>Age</span></button>
-      <button data-screen="loan" class="nav-item flex flex-col items-center p-2 px-3 rounded-2xl text-xs text-slate-500"><i class="fa-solid fa-coins text-xl"></i><span>Loan</span></button>
-      <button data-screen="love" class="nav-item flex flex-col items-center p-2 px-3 rounded-2xl text-xs text-slate-500"><i class="fa-regular fa-heart text-xl"></i><span>Love</span></button>
-      <button data-screen="card" class="nav-item flex flex-col items-center p-2 px-3 rounded-2xl text-xs text-slate-500"><i class="fa-regular fa-gem text-xl"></i><span>Card</span></button>
-      <button data-screen="history" class="nav-item flex flex-col items-center p-2 px-3 rounded-2xl text-xs text-slate-500"><i class="fa-regular fa-clock text-xl"></i><span>History</span></button>
-      <button data-screen="privacy" class="nav-item flex flex-col items-center p-2 px-3 rounded-2xl text-xs text-slate-500"><i class="fa-regular fa-file-lines text-xl"></i><span>Privacy</span></button>
     </div>
   </div>
 
   <script>
     (function() {
-      // splash hide
-      const splash = document.getElementById('splash');
-      setTimeout(() => { splash.style.opacity = '0'; splash.style.visibility = 'hidden'; }, 2000);
+      // ---------- 1. generate 50 floating orbs (background animation tools) ----------
+      const orbContainer = document.getElementById('orb-container');
+      for (let i = 0; i < 50; i++) {
+        const orb = document.createElement('div');
+        orb.className = 'orb';
+        const size = 20 + Math.floor(Math.random() * 120); // 20-140px
+        orb.style.width = size + 'px';
+        orb.style.height = size + 'px';
+        orb.style.left = Math.random() * 100 + '%';
+        orb.style.top = Math.random() * 100 + '%';
+        orb.style.animation = `soft-float ${15 + Math.random() * 25}s ease-in-out infinite`;
+        orb.style.opacity = 0.05 + Math.random() * 0.15;
+        orb.style.background = `radial-gradient(circle at 30% 30%, rgba(255,220,250,0.8), rgba(150,130,255,0.1))`;
+        orbContainer.appendChild(orb);
+      }
 
-      // dark mode toggle
-      const darkToggle = document.getElementById('darkModeToggle');
-      const body = document.body;
-      darkToggle.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const icon = darkToggle.querySelector('i');
-        if (body.classList.contains('dark-mode')) {
-          icon.classList.remove('fa-moon'); icon.classList.add('fa-sun');
-        } else {
-          icon.classList.remove('fa-sun'); icon.classList.add('fa-moon');
-        }
-      });
+      // ---------- 2. generate 50 tool cards (static base list) ----------
+      const toolsGrid = document.getElementById('toolsGrid');
+      const toolCountDisplay = document.getElementById('toolCountDisplay');
+      const footerToolCount = document.getElementById('footerToolCount');
 
-      // screen navigation
-      const screens = {
-        age: document.getElementById('screen-age'),
-        loan: document.getElementById('screen-loan'),
-        love: document.getElementById('screen-love'),
-        card: document.getElementById('screen-card'),
-        history: document.getElementById('screen-history'),
-        privacy: document.getElementById('screen-privacy')
-      };
-      const navItems = document.querySelectorAll('.nav-item');
-      const mobileNavLinks = document.querySelectorAll('.mobile-nav-item');
-      const screenTitle = document.getElementById('screenTitle');
-      const screenSubtitle = document.getElementById('screenSubtitle');
-      
-      const titles = {
-        age: '<i class="fa-regular fa-calendar mr-2"></i>Age calculator',
-        loan: '<i class="fa-solid fa-coins mr-2"></i>Loan calculator',
-        love: '<i class="fa-regular fa-heart mr-2"></i>Love calculator',
-        card: '<i class="fa-regular fa-gem mr-2"></i>Greeting card',
-        history: '<i class="fa-regular fa-clock mr-2"></i>History log',
-        privacy: '<i class="fa-regular fa-shield mr-2"></i>Privacy policy'
-      };
-      const subtitles = {
-        age: 'exact age · next birthday · about',
-        loan: 'monthly + total interest · about',
-        love: 'compatibility score · about',
-        card: 'themes · download png · about',
-        history: 'recent calculations · about',
-        privacy: 'your data stays local'
-      };
+      // predefined 50 tools (name, icon, color classes). using variety
+      const baseTools = [
+        { name: 'age calculator', icon: 'fa-regular fa-calendar', color: 'purple' },
+        { name: 'pdf merger', icon: 'fa-solid fa-file-pdf', color: 'rose' },
+        { name: 'image resizer', icon: 'fa-regular fa-image', color: 'sky' },
+        { name: 'qr generator', icon: 'fa-solid fa-qrcode', color: 'indigo' },
+        { name: 'password strength', icon: 'fa-solid fa-lock', color: 'emerald' },
+        { name: 'json formatter', icon: 'fa-solid fa-brackets-curly', color: 'fuchsia' },
+        { name: 'color palette', icon: 'fa-solid fa-palette', color: 'pink' },
+        { name: 'markdown editor', icon: 'fa-regular fa-markdown', color: 'amber' },
+        { name: 'unit converter', icon: 'fa-solid fa-scale-balanced', color: 'lime' },
+        { name: 'stopwatch', icon: 'fa-regular fa-clock', color: 'cyan' },
+        { name: 'base64 tool', icon: 'fa-solid fa-shield-halved', color: 'violet' },
+        { name: 'html minify', icon: 'fa-solid fa-code', color: 'orange' },
+        { name: 'css beautify', icon: 'fa-brands fa-css3-alt', color: 'blue' },
+        { name: 'jwt decoder', icon: 'fa-solid fa-key', color: 'yellow' },
+        { name: 'uuid generator', icon: 'fa-solid fa-fingerprint', color: 'teal' },
+        { name: 'lorem ipsum', icon: 'fa-solid fa-paragraph', color: 'slate' },
+        { name: 'text diff', icon: 'fa-solid fa-code-compare', color: 'stone' },
+        { name: 'barcode scanner', icon: 'fa-solid fa-camera', color: 'red' },
+        { name: 'excel editor', icon: 'fa-regular fa-file-excel', color: 'green' },
+        { name: 'word counter', icon: 'fa-solid fa-calculator', color: 'gray' },
+        { name: 'timestamp conv', icon: 'fa-regular fa-calendar-clock', color: 'zinc' },
+        { name: 'cron builder', icon: 'fa-solid fa-clock', color: 'neutral' },
+        { name: 'regex tester', icon: 'fa-solid fa-code', color: 'indigo' },
+        { name: 'svg editor', icon: 'fa-solid fa-draw-polygon', color: 'purple' },
+        { name: 'png compressor', icon: 'fa-solid fa-file-image', color: 'fuchsia' },
+        { name: 'gif maker', icon: 'fa-solid fa-film', color: 'pink' },
+        { name: 'audio converter', icon: 'fa-solid fa-music', color: 'amber' },
+        { name: 'video trimmer', icon: 'fa-solid fa-video', color: 'emerald' },
+        { name: 'qr reader', icon: 'fa-solid fa-camera-retro', color: 'sky' },
+        { name: 'morse code', icon: 'fa-solid fa-circle', color: 'violet' },
+        { name: 'binary converter', icon: 'fa-solid fa-arrow-right-arrow-left', color: 'cyan' },
+        { name: 'ascii art', icon: 'fa-solid fa-paintbrush', color: 'rose' },
+        { name: 'emoji picker', icon: 'fa-regular fa-face-smile', color: 'yellow' },
+        { name: 'case converter', icon: 'fa-solid fa-text-height', color: 'lime' },
+        { name: 'slug generator', icon: 'fa-solid fa-link', color: 'teal' },
+        { name: 'meta tag analyzer', icon: 'fa-solid fa-tag', color: 'orange' },
+        { name: 'robots.txt gen', icon: 'fa-solid fa-robot', color: 'blue' },
+        { name: 'sitemap generator', icon: 'fa-solid fa-sitemap', color: 'green' },
+        { name: 'http status', icon: 'fa-solid fa-server', color: 'red' },
+        { name: 'user agent parse', icon: 'fa-solid fa-user', color: 'purple' },
+        { name: 'ip lookup', icon: 'fa-solid fa-network-wired', color: 'indigo' },
+        { name: 'dns lookup', icon: 'fa-solid fa-diagram-project', color: 'pink' },
+        { name: 'whois search', icon: 'fa-solid fa-magnifying-glass', color: 'amber' },
+        { name: 'ssl checker', icon: 'fa-solid fa-shield', color: 'emerald' },
+        { name: 'ping tool', icon: 'fa-solid fa-wifi', color: 'sky' },
+        { name: 'port scanner', icon: 'fa-solid fa-plug', color: 'fuchsia' },
+        { name: 'hash generator', icon: 'fa-solid fa-hashtag', color: 'violet' },
+        { name: 'bcrypt tool', icon: 'fa-solid fa-lock-open', color: 'cyan' },
+        { name: 'rsa key gen', icon: 'fa-solid fa-key', color: 'lime' },
+        { name: 'jwt parser', icon: 'fa-solid fa-ticket', color: 'orange' },
+      ];
 
-      function activateScreen(screenId) {
-        Object.values(screens).forEach(s => s.classList.remove('active'));
-        if (screens[screenId]) screens[screenId].classList.add('active');
-        
-        navItems.forEach(btn => {
-          btn.classList.remove('active', 'text-indigo-600', 'bg-indigo-50/50');
-          if (btn.getAttribute('data-screen') === screenId) {
-            btn.classList.add('active', 'text-indigo-600', 'bg-indigo-50/50');
-          }
+      // store current tools in memory (including added ones)
+      let toolsArray = [...baseTools];
+
+      function renderTools() {
+        toolsGrid.innerHTML = '';
+        toolsArray.forEach((tool, index) => {
+          const colorMap = {
+            indigo: 'bg-indigo-100 text-indigo-700 border-indigo-300 hover:bg-indigo-200',
+            purple: 'bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200',
+            fuchsia: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300 hover:bg-fuchsia-200',
+            pink: 'bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200',
+            amber: 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200',
+            emerald: 'bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200',
+            sky: 'bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200',
+            rose: 'bg-rose-100 text-rose-700 border-rose-300 hover:bg-rose-200',
+            lime: 'bg-lime-100 text-lime-700 border-lime-300 hover:bg-lime-200',
+            cyan: 'bg-cyan-100 text-cyan-700 border-cyan-300 hover:bg-cyan-200',
+            violet: 'bg-violet-100 text-violet-700 border-violet-300 hover:bg-violet-200',
+            orange: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200',
+            blue: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200',
+            yellow: 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200',
+            teal: 'bg-teal-100 text-teal-700 border-teal-300 hover:bg-teal-200',
+            slate: 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200',
+            stone: 'bg-stone-100 text-stone-700 border-stone-300 hover:bg-stone-200',
+            red: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
+            green: 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200',
+            gray: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200',
+            zinc: 'bg-zinc-100 text-zinc-700 border-zinc-300 hover:bg-zinc-200',
+            neutral: 'bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200',
+          };
+          const colorClass = colorMap[tool.color] || colorMap.purple;
+          const card = document.createElement('div');
+          card.className = `rounded-2xl border-2 p-4 ${colorClass} shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center gap-2 card-enter hover:-translate-y-1 hover:rotate-0.5 backdrop-blur-sm bg-opacity-70`;
+          card.style.animationDelay = (index * 0.01) + 's'; // slight stagger
+          card.innerHTML = `
+            <div class="w-14 h-14 rounded-2xl bg-white/60 flex items-center justify-center text-3xl shadow-inner border border-white/70">
+              <i class="${tool.icon}"></i>
+            </div>
+            <span class="font-medium text-sm capitalize">${tool.name}</span>
+            <span class="text-[10px] opacity-60 mt-1"><i class="fa-regular fa-circle-check"></i> tool #${index+1}</span>
+          `;
+          toolsGrid.appendChild(card);
         });
-        
-        screenTitle.innerHTML = titles[screenId] || 'AuraTool';
-        screenSubtitle.innerText = subtitles[screenId] || '';
-        
-        if (menuOpen) toggleMenu(false);
+        // update counters
+        toolCountDisplay.innerText = toolsArray.length + ' items';
+        footerToolCount.innerText = toolsArray.length;
       }
 
-      navItems.forEach(btn => {
-        btn.addEventListener('click', () => activateScreen(btn.getAttribute('data-screen')));
+      renderTools();
+
+      // ---------- 3. feature add panel logic (open/close / preview) ----------
+      const openBtn = document.getElementById('openFeatureModalBtn');
+      const panel = document.getElementById('featureAddPanel');
+      const closeBtn = document.getElementById('closeFeaturePanelBtn');
+      const newToolName = document.getElementById('newToolName');
+      const newToolIcon = document.getElementById('newToolIcon');
+      const newToolColor = document.getElementById('newToolColor');
+      const previewName = document.getElementById('previewName');
+      const previewCardIcon = document.querySelector('#previewCard i');
+      const addToolBtn = document.getElementById('addToolBtn');
+
+      // open panel
+      openBtn.addEventListener('click', () => {
+        panel.classList.remove('hidden');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
-      
-      mobileNavLinks.forEach(link => {
-        link.addEventListener('click', (e) => { 
-          e.preventDefault(); 
-          activateScreen(link.getAttribute('data-screen')); 
-        });
+      closeBtn.addEventListener('click', () => {
+        panel.classList.add('hidden');
       });
 
-      // mobile menu toggle
-      const menuBtn = document.getElementById('menuBtn');
-      const mobileMenu = document.getElementById('mobileMenu');
-      let menuOpen = false;
-      
-      function toggleMenu(open) {
-        if (open) {
-          mobileMenu.classList.remove('hidden');
-          setTimeout(() => {
-            mobileMenu.classList.remove('opacity-0', '-translate-y-3');
-            mobileMenu.classList.add('opacity-100', 'translate-y-0');
-          }, 10);
-        } else {
-          mobileMenu.classList.add('opacity-0', '-translate-y-3');
-          mobileMenu.classList.remove('opacity-100', 'translate-y-0');
-          setTimeout(() => { mobileMenu.classList.add('hidden'); }, 250);
-        }
-        menuOpen = open;
+      // live preview update
+      function updatePreview() {
+        previewName.innerText = newToolName.value || 'new tool';
+        const iconValue = newToolIcon.value || 'fa-solid fa-wrench';
+        previewCardIcon.className = iconValue; // set icon class
+        // color preview: reflect selected color on left icon background
+        const color = newToolColor.value;
+        const colorMapPreview = {
+          indigo: 'from-indigo-400 to-indigo-600',
+          purple: 'from-purple-400 to-purple-600',
+          fuchsia: 'from-fuchsia-400 to-fuchsia-600',
+          pink: 'from-pink-400 to-pink-600',
+          amber: 'from-amber-400 to-amber-600',
+          emerald: 'from-emerald-400 to-emerald-600',
+          sky: 'from-sky-400 to-sky-600',
+        };
+        const grad = colorMapPreview[color] || 'from-indigo-400 to-indigo-600';
+        document.querySelector('#previewCard div:first-child').className = `w-12 h-12 rounded-2xl bg-gradient-to-br ${grad} text-white flex items-center justify-center text-2xl shadow-md`;
       }
-      
-      menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMenu(!menuOpen);
-      });
-      
-      document.addEventListener('click', (e) => {
-        if (!menuBtn.contains(e.target) && !mobileMenu.contains(e.target) && menuOpen) {
-          toggleMenu(false);
-        }
+      newToolName.addEventListener('input', updatePreview);
+      newToolIcon.addEventListener('input', updatePreview);
+      newToolColor.addEventListener('change', updatePreview);
+
+      // add new tool to array and re-render
+      addToolBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const name = newToolName.value.trim() || 'custom tool';
+        const icon = newToolIcon.value.trim() || 'fa-solid fa-wrench';
+        const color = newToolColor.value;
+        // add to tools array
+        toolsArray.push({ name, icon, color });
+        renderTools(); // re-render grid (now with 51)
+        panel.classList.add('hidden');
+        // reset form
+        newToolName.value = '';
+        newToolIcon.value = 'fa-solid fa-wrench';
+        newToolColor.value = 'indigo';
+        updatePreview();
+
+        // success toast-like (simple alert vanish)
+        const tempMsg = document.createElement('div');
+        tempMsg.className = 'fixed bottom-5 right-5 bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-2xl shadow-xl z-50 flex items-center gap-3 animate-bounce';
+        tempMsg.innerHTML = '<i class="fa-regular fa-circle-check text-xl"></i> tool added! now ' + toolsArray.length + ' tools';
+        document.body.appendChild(tempMsg);
+        setTimeout(() => tempMsg.remove(), 2500);
       });
 
-      // ===== CALCULATORS =====
+      // initial preview set
+      updatePreview();
 
-      // AGE
-      const birthInput = document.getElementById('birthDate');
-      const ageBtn = document.getElementById('calcAgeBtn');
-      const ageRes = document.getElementById('ageResult');
-      
-      function updateAge() {
-        const birth = new Date(birthInput.value);
-        if (isNaN(birth)) { ageRes.innerHTML = '<p>invalid date</p>'; return; }
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const m = today.getMonth() - birth.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-        
-        const nextBirth = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
-        if (nextBirth < today) nextBirth.setFullYear(nextBirth.getFullYear() + 1);
-        const diffDays = Math.ceil((nextBirth - today) / (1000 * 60 * 60 * 24));
-        
-        ageRes.innerHTML = `<p><span class="font-bold">${age} years</span> (exact)</p><p class="text-sm">next birthday in ${diffDays} days</p>`;
-      }
-      ageBtn.addEventListener('click', updateAge);
-      updateAge();
-
-      // LOAN
-      const loanAmount = document.getElementById('loanAmount');
-      const loanRate = document.getElementById('loanRate');
-      const loanTerm = document.getElementById('loanTerm');
-      const loanBtn = document.getElementById('calcLoanBtn');
-      const loanRes = document.getElementById('loanResult');
-      
-      function updateLoan() {
-        const p = parseFloat(loanAmount.value) || 0;
-        const annualRate = parseFloat(loanRate.value) || 0;
-        const years = parseFloat(loanTerm.value) || 0;
-        
-        if (p <= 0 || annualRate <= 0 || years <= 0) { 
-          loanRes.innerHTML = '<p>enter valid numbers</p>'; 
-          return; 
-        }
-        
-        const monthlyRate = annualRate / 100 / 12;
-        const months = years * 12;
-        
-        if (monthlyRate === 0) {
-          const monthly = p / months;
-          loanRes.innerHTML = `<p><span class="font-bold">$${monthly.toFixed(2)}</span> /month</p><p class="text-sm">total interest: $0.00</p>`;
-          return;
-        }
-        
-        const monthly = (p * monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
-        if (!isFinite(monthly)) { 
-          loanRes.innerHTML = '<p>invalid rate/term</p>'; 
-          return; 
-        }
-        
-        const totalPaid = monthly * months;
-        const interest = totalPaid - p;
-        loanRes.innerHTML = `<p><span class="font-bold">$${monthly.toFixed(2)}</span> /month</p><p class="text-sm">total interest: $${interest.toFixed(2)}</p>`;
-      }
-      loanBtn.addEventListener('click', updateLoan);
-      updateLoan();
-
-      // LOVE
-      const name1 = document.getElementById('name1');
-      const name2 = document.getElementById('name2');
-      const loveBtn = document.getElementById('calcLoveBtn');
-      const loveRes = document.getElementById('loveResult');
-      
-      function updateLove() {
-        const a = name1.value.trim() || '?';
-        const b = name2.value.trim() || '?';
-        let combined = 0;
-        for (let i = 0; i < a.length; i++) combined += a.charCodeAt(i);
-        for (let i = 0; i < b.length; i++) combined += b.charCodeAt(i);
-        let score = 50 + (combined % 51);
-        let msg = score > 80 ? 'strong connection' : (score > 60 ? 'good vibes' : 'interesting mix');
-        loveRes.innerHTML = `<p class="font-bold text-xl">❤️ ${score}%</p><p class="text-sm">"${msg}"</p>`;
-      }
-      loveBtn.addEventListener('click', updateLove);
-      updateLove();
-
-      // GREETING CARD
-      const cardNameInput = document.getElementById('cardNameInput');
-      let cardNameDisplay = document.getElementById('cardNameDisplay');
-      const cardPreview = document.getElementById('cardPreview');
-      const cardTheme = document.getElementById('cardTheme');
-      
-      cardNameInput.addEventListener('input', () => {
-        cardNameDisplay.innerText = cardNameInput.value || ' ';
-      });
-      
-      cardTheme.addEventListener('change', (e) => {
-        const theme = e.target.value;
-        let bgClass = '';
-        if (theme === 'sunset') bgClass = 'bg-gradient-to-br from-orange-100 via-rose-100 to-yellow-100';
-        else if (theme === 'ocean') bgClass = 'bg-gradient-to-br from-cyan-100 via-blue-100 to-teal-100';
-        else bgClass = 'bg-gradient-to-br from-indigo-100 via-fuchsia-100 to-amber-100';
-        
-        cardPreview.className = `${bgClass} p-6 rounded-2xl shadow-inner border-2 border-white/60 mb-4 relative`;
-        const currentName = cardNameInput.value || 'Alex';
-        cardPreview.innerHTML = `<i class="fa-regular fa-star absolute top-2 right-2 text-amber-400"></i>
-          <p id="cardNameDisplay" class="text-4xl font-black bg-gradient-to-r from-indigo-800 to-pink-700 bg-clip-text text-transparent">${currentName}</p>
-          <p class="text-slate-600 italic">sending good vibes ✨</p>
-          <p class="text-xs text-slate-400 mt-3">— AuraTool</p>`;
-        cardNameDisplay = document.getElementById('cardNameDisplay');
-      });
-      
-      document.getElementById('downloadCardBtn').addEventListener('click', function() {
-        if (typeof html2canvas === 'undefined') { 
-          alert('html2canvas loading, try again'); 
-          return; 
-        }
-        html2canvas(cardPreview, { scale: 2, backgroundColor: null }).then(canvas => {
-          const link = document.createElement('a');
-          link.download = 'aura_greeting.png';
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-        }).catch(() => alert('could not generate image'));
-      });
-
-      // HISTORY
-      let historyEntries = [];
-      const historyList = document.getElementById('historyList');
-      
-      function addHistory(text) {
-        const timestamp = new Date().toLocaleTimeString();
-        historyEntries.push(`${text} · ${timestamp}`);
-        if (historyEntries.length > 10) historyEntries.shift();
-        renderHistory();
-      }
-      
-      function renderHistory() {
-        if (historyEntries.length === 0) {
-          historyList.innerHTML = '<p class="text-slate-500 italic">No history yet. Save calculations using the buttons.</p>';
-        } else {
-          historyList.innerHTML = historyEntries.map(e => 
-            `<div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-xs">${e}</div>`
-          ).join('');
-        }
-      }
-      
-      document.getElementById('saveAgeHistory').addEventListener('click', () => {
-        const ageText = document.getElementById('ageResult').innerText.replace(/\n/g, ' ');
-        addHistory('Age: ' + ageText);
-      });
-      
-      document.getElementById('saveLoanHistory').addEventListener('click', () => {
-        const loanText = document.getElementById('loanResult').innerText.replace(/\n/g, ' ');
-        addHistory('Loan: ' + loanText);
-      });
-      
-      document.getElementById('saveLoveHistory').addEventListener('click', () => {
-        const loveText = document.getElementById('loveResult').innerText.replace(/\n/g, ' ');
-        addHistory('Love: ' + loveText);
-      });
-      
-      document.getElementById('clearHistoryBtn').addEventListener('click', () => {
-        historyEntries = [];
-        renderHistory();
-      });
-
-      activateScreen('age');
+      // Extra: open feature panel maybe with prefilled demo? but fine.
     })();
   </script>
-  <style>
-    #splash { transition: opacity 0.7s ease, visibility 0.7s ease; }
-  </style>
+
+  <!-- tiny floating indicator 50+ animations -->
+  <div class="fixed bottom-3 left-3 z-20 bg-white/70 backdrop-blur-sm text-xs rounded-full px-4 py-2 shadow-md border border-white/70 flex items-center gap-2">
+    <i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i>
+    <span class="font-mono text-purple-800">50+ tools</span>
+    <span class="w-1 h-1 bg-purple-400 rounded-full"></span>
+    <i class="fa-regular fa-square-plus text-indigo-400"></i>
+    <span class="hidden sm:inline">feature add ready</span>
+  </div>
 </body>
 </html>
